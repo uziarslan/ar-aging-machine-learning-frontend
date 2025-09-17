@@ -1543,7 +1543,7 @@ const Clients = ({ onAccordionExpand }) => {
                                                                                                 onPopoverMouseLeave={handlePopoverMouseLeave}
                                                                                                 formatCurrency={formatCurrency}
                                                                                             >
-                                                                                                <div className={`text-xs cursor-pointer ${comparison.current.absolute >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                                                                <div className={`text-xs cursor-pointer ${(Math.abs(comparison.current.absolute) < 0.0001 && Math.abs(comparison.current.percentage) < 0.0001) ? 'text-gray-400' : (comparison.current.absolute >= 0 ? 'text-green-600' : 'text-red-600')}`}>
                                                                                                     {comparison.current.absolute >= 0 ? '+' : ''}{formatCurrency(comparison.current.absolute)}
                                                                                                     <span className="ml-1">({comparison.current.percentage >= 0 ? '+' : ''}{comparison.current.percentage.toFixed(1)}%)</span>
                                                                                                 </div>
@@ -1564,7 +1564,7 @@ const Clients = ({ onAccordionExpand }) => {
                                                                                                 onPopoverMouseLeave={handlePopoverMouseLeave}
                                                                                                 formatCurrency={formatCurrency}
                                                                                             >
-                                                                                                <div className={`text-xs cursor-pointer ${comparison['0_30'].absolute >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                                                                <div className={`text-xs cursor-pointer ${(Math.abs(comparison['0_30'].absolute) < 0.0001 && Math.abs(comparison['0_30'].percentage) < 0.0001) ? 'text-gray-400' : (comparison['0_30'].absolute >= 0 ? 'text-green-600' : 'text-red-600')}`}>
                                                                                                     {comparison['0_30'].absolute >= 0 ? '+' : ''}{formatCurrency(comparison['0_30'].absolute)}
                                                                                                     <span className="ml-1">({comparison['0_30'].percentage >= 0 ? '+' : ''}{comparison['0_30'].percentage.toFixed(1)}%)</span>
                                                                                                 </div>
@@ -1585,7 +1585,7 @@ const Clients = ({ onAccordionExpand }) => {
                                                                                                 onPopoverMouseLeave={handlePopoverMouseLeave}
                                                                                                 formatCurrency={formatCurrency}
                                                                                             >
-                                                                                                <div className={`text-xs cursor-pointer ${comparison['31_60'].absolute >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                                                                <div className={`text-xs cursor-pointer ${(Math.abs(comparison['31_60'].absolute) < 0.0001 && Math.abs(comparison['31_60'].percentage) < 0.0001) ? 'text-gray-400' : (comparison['31_60'].absolute >= 0 ? 'text-green-600' : 'text-red-600')}`}>
                                                                                                     {comparison['31_60'].absolute >= 0 ? '+' : ''}{formatCurrency(comparison['31_60'].absolute)}
                                                                                                     <span className="ml-1">({comparison['31_60'].percentage >= 0 ? '+' : ''}{comparison['31_60'].percentage.toFixed(1)}%)</span>
                                                                                                 </div>
@@ -1606,7 +1606,7 @@ const Clients = ({ onAccordionExpand }) => {
                                                                                                 onPopoverMouseLeave={handlePopoverMouseLeave}
                                                                                                 formatCurrency={formatCurrency}
                                                                                             >
-                                                                                                <div className={`text-xs cursor-pointer ${comparison['61_90'].absolute >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                                                                <div className={`text-xs cursor-pointer ${(Math.abs(comparison['61_90'].absolute) < 0.0001 && Math.abs(comparison['61_90'].percentage) < 0.0001) ? 'text-gray-400' : (comparison['61_90'].absolute >= 0 ? 'text-green-600' : 'text-red-600')}`}>
                                                                                                     {comparison['61_90'].absolute >= 0 ? '+' : ''}{formatCurrency(comparison['61_90'].absolute)}
                                                                                                     <span className="ml-1">({comparison['61_90'].percentage >= 0 ? '+' : ''}{comparison['61_90'].percentage.toFixed(1)}%)</span>
                                                                                                 </div>
@@ -1627,7 +1627,7 @@ const Clients = ({ onAccordionExpand }) => {
                                                                                                 onPopoverMouseLeave={handlePopoverMouseLeave}
                                                                                                 formatCurrency={formatCurrency}
                                                                                             >
-                                                                                                <div className={`text-xs cursor-pointer ${comparison['90_plus'].absolute >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                                                                <div className={`text-xs cursor-pointer ${(Math.abs(comparison['90_plus'].absolute) < 0.0001 && Math.abs(comparison['90_plus'].percentage) < 0.0001) ? 'text-gray-400' : (comparison['90_plus'].absolute >= 0 ? 'text-green-600' : 'text-red-600')}`}>
                                                                                                     {comparison['90_plus'].absolute >= 0 ? '+' : ''}{formatCurrency(comparison['90_plus'].absolute)}
                                                                                                     <span className="ml-1">({comparison['90_plus'].percentage >= 0 ? '+' : ''}{comparison['90_plus'].percentage.toFixed(1)}%)</span>
                                                                                                 </div>
@@ -1648,7 +1648,7 @@ const Clients = ({ onAccordionExpand }) => {
                                                                                                 onPopoverMouseLeave={handlePopoverMouseLeave}
                                                                                                 formatCurrency={formatCurrency}
                                                                                             >
-                                                                                                <div className={`text-xs cursor-pointer ${comparison.total.absolute >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                                                                <div className={`text-xs cursor-pointer ${(Math.abs(comparison.total.absolute) < 0.0001 && Math.abs(comparison.total.percentage) < 0.0001) ? 'text-gray-400' : (comparison.total.absolute >= 0 ? 'text-green-600' : 'text-red-600')}`}>
                                                                                                     {comparison.total.absolute >= 0 ? '+' : ''}{formatCurrency(comparison.total.absolute)}
                                                                                                     <span className="ml-1">({comparison.total.percentage >= 0 ? '+' : ''}{comparison.total.percentage.toFixed(1)}%)</span>
                                                                                                 </div>

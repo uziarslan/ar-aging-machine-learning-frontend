@@ -74,6 +74,7 @@ const PredictionForm = ({
                                 placeholder="0"
                                 min="0"
                                 step="1"
+                                onWheel={(e) => e.currentTarget.blur()}
                                 required
                             />
                         </div>

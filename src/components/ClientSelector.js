@@ -360,7 +360,8 @@ const ClientSelector = ({ clients, selectedClient, onClientChange, loading, erro
                     className="hidden"
                 />
 
-                <div className="space-y-3">
+                {/* Entries with fixed max height and scrolling */}
+                <div className="max-h-96 overflow-y-auto border border-gray-200 rounded-md p-3 space-y-3">
                     {entries.map((entry, index) => (
                         <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
                             <div className="md:col-span-2">
@@ -397,6 +398,7 @@ const ClientSelector = ({ clients, selectedClient, onClientChange, loading, erro
                                             placeholder="0"
                                             min="0"
                                             step="0.01"
+                                            onWheel={(e) => e.currentTarget.blur()}
                                         />
                                     </div>
                                 </div>

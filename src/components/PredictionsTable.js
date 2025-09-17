@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 
 const PredictionsTable = ({ predictions, lastMonthData, onPredictionsChange, targetTotal, onTargetMismatch }) => {
     const [editablePredictions, setEditablePredictions] = useState([]);
-    const [autoBalance, setAutoBalance] = useState(true);
 
     useEffect(() => {
         setEditablePredictions([...predictions]);
@@ -13,17 +12,8 @@ const PredictionsTable = ({ predictions, lastMonthData, onPredictionsChange, tar
         const newValue = parseFloat(value) || 0;
 
         if (field === 'total') {
-            // If total is changed, distribute proportionally across buckets
-            if (autoBalance && newValue > 0) {
-                const currentTotal = newPredictions[index].total || 1;
-                const ratio = newValue / currentTotal;
-
-                newPredictions[index]['current'] = Math.round((newPredictions[index]['current'] * ratio) * 100) / 100;
-                newPredictions[index]['0_30'] = Math.round((newPredictions[index]['0_30'] * ratio) * 100) / 100;
-                newPredictions[index]['31_60'] = Math.round((newPredictions[index]['31_60'] * ratio) * 100) / 100;
-                newPredictions[index]['61_90'] = Math.round((newPredictions[index]['61_90'] * ratio) * 100) / 100;
-                newPredictions[index]['90_plus'] = Math.round((newPredictions[index]['90_plus'] * ratio) * 100) / 100;
-            }
+            // Total is derived from buckets; ignore direct edits
+            return;
         } else if (field === 'current') {
             // If current is changed, also update 0_30 to match
             newPredictions[index][field] = newValue;
@@ -33,12 +23,14 @@ const PredictionsTable = ({ predictions, lastMonthData, onPredictionsChange, tar
             newPredictions[index][field] = newValue;
         }
 
-        // Recalculate total
+        // Recalculate total (sum of aged buckets only)
         newPredictions[index].total =
             newPredictions[index]['0_30'] +
             newPredictions[index]['31_60'] +
             newPredictions[index]['61_90'] +
             newPredictions[index]['90_plus'];
+        // Enforce Current = Total
+        newPredictions[index].current = newPredictions[index].total;
 
         setEditablePredictions(newPredictions);
         onPredictionsChange(newPredictions);
@@ -101,13 +93,7 @@ const PredictionsTable = ({ predictions, lastMonthData, onPredictionsChange, tar
         }
     }, [isTargetMatched, editablePredictions, targetTotal, grandTotal, onPredictionsChange]);
 
-    // Auto-adjust when predictions change
-    useEffect(() => {
-        if (editablePredictions.length > 0 && !isTargetMatched) {
-            const timeoutId = setTimeout(adjustToTarget, 100); // Small delay to avoid infinite loops
-            return () => clearTimeout(timeoutId);
-        }
-    }, [adjustToTarget, editablePredictions.length, isTargetMatched]);
+    // Remove automatic target fixing; keep manual button only
 
     const formatCurrency = (value) => {
         return new Intl.NumberFormat('en-US', {
@@ -208,15 +194,6 @@ const PredictionsTable = ({ predictions, lastMonthData, onPredictionsChange, tar
             <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold text-gray-900">Predictions Table</h2>
                 <div className="flex items-center gap-4">
-                    <label className="flex items-center">
-                        <input
-                            type="checkbox"
-                            checked={autoBalance}
-                            onChange={(e) => setAutoBalance(e.target.checked)}
-                            className="mr-2 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                        />
-                        <span className="text-sm text-gray-700">Auto-balance per row</span>
-                    </label>
                     <div className="text-sm">
                         <span className="text-gray-600">Grand Total:</span>
                         <span className={`ml-2 font-medium ${isTargetMatched ? 'text-success-600' : 'text-danger-600'}`}>
@@ -267,6 +244,7 @@ const PredictionsTable = ({ predictions, lastMonthData, onPredictionsChange, tar
                                             className="table-input"
                                             min="0"
                                             step="1"
+                                            onWheel={(e) => e.currentTarget.blur()}
                                         />
                                         <DifferenceDisplay
                                             currentValue={prediction.current || prediction['0_30']}
@@ -284,6 +262,7 @@ const PredictionsTable = ({ predictions, lastMonthData, onPredictionsChange, tar
                                             className="table-input"
                                             min="0"
                                             step="1"
+                                            onWheel={(e) => e.currentTarget.blur()}
                                         />
                                         <DifferenceDisplay
                                             currentValue={prediction['0_30']}
@@ -301,6 +280,7 @@ const PredictionsTable = ({ predictions, lastMonthData, onPredictionsChange, tar
                                             className="table-input"
                                             min="0"
                                             step="1"
+                                            onWheel={(e) => e.currentTarget.blur()}
                                         />
                                         <DifferenceDisplay
                                             currentValue={prediction['31_60']}
@@ -318,6 +298,7 @@ const PredictionsTable = ({ predictions, lastMonthData, onPredictionsChange, tar
                                             className="table-input"
                                             min="0"
                                             step="1"
+                                            onWheel={(e) => e.currentTarget.blur()}
                                         />
                                         <DifferenceDisplay
                                             currentValue={prediction['61_90']}
@@ -335,6 +316,7 @@ const PredictionsTable = ({ predictions, lastMonthData, onPredictionsChange, tar
                                             className="table-input"
                                             min="0"
                                             step="1"
+                                            onWheel={(e) => e.currentTarget.blur()}
                                         />
                                         <DifferenceDisplay
                                             currentValue={prediction['90_plus']}
@@ -352,6 +334,7 @@ const PredictionsTable = ({ predictions, lastMonthData, onPredictionsChange, tar
                                             className="table-input font-medium"
                                             min="0"
                                             step="1"
+                                            onWheel={(e) => e.currentTarget.blur()}
                                         />
                                         <DifferenceDisplay
                                             currentValue={prediction.total}
@@ -440,3 +423,5 @@ const PredictionsTable = ({ predictions, lastMonthData, onPredictionsChange, tar
 };
 
 export default PredictionsTable;
+
+

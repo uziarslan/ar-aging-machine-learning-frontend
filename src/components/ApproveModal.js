@@ -3,8 +3,8 @@ import useApi from '../hooks/useApi';
 
 const ApproveModal = ({ predictions, clientId, targetMonth, modelVersion, onClose, onSuccess }) => {
     const [comment, setComment] = useState('');
-    const [retrain, setRetrain] = useState(false);
     const [isApproving, setIsApproving] = useState(false);
+    const retrain = true; // Always retrain
 
     const { postWithApiKey } = useApi();
 
@@ -99,23 +99,6 @@ const ApproveModal = ({ predictions, clientId, targetMonth, modelVersion, onClos
                         />
                     </div>
 
-                    {/* Retrain Option */}
-                    <div className="mb-6">
-                        <label className="flex items-center">
-                            <input
-                                type="checkbox"
-                                checked={retrain}
-                                onChange={(e) => setRetrain(e.target.checked)}
-                                className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                            />
-                            <span className="ml-2 text-sm text-gray-700">
-                                Retrain model with approved predictions
-                            </span>
-                        </label>
-                        <p className="text-xs text-gray-500 mt-1">
-                            This will update the model with the new data for future predictions
-                        </p>
-                    </div>
 
                     {/* Actions */}
                     <div className="flex justify-end space-x-3">

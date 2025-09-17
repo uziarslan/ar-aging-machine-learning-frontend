@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ClientSelector from './ClientSelector';
 import PredictionForm from './PredictionForm';
 import PredictionsTable from './PredictionsTable';
@@ -7,11 +8,12 @@ import DownloadButton from './DownloadButton';
 import StatsCards from './StatsCards';
 import useApi from '../hooks/useApi';
 
-const Dashboard = forwardRef((props, ref) => {
+const Dashboard = forwardRef(({ onNavigation }, ref) => {
+    const navigate = useNavigate();
     const [selectedClient, setSelectedClient] = useState(null);
     const [targetMonth, setTargetMonth] = useState('');
     const [targetTotal, setTargetTotal] = useState('');
-    const [carryThreshold, setCarryThreshold] = useState(0.5);
+    const [carryThreshold, setCarryThreshold] = useState(0.2);
     const [predictions, setPredictions] = useState([]);
     const [lastMonthData, setLastMonthData] = useState([]);
     const [isGenerating, setIsGenerating] = useState(false);
@@ -21,6 +23,7 @@ const Dashboard = forwardRef((props, ref) => {
     const [minTargetMonth, setMinTargetMonth] = useState('');
     const [targetMismatch, setTargetMismatch] = useState({ show: false, grandTotal: 0, targetTotal: 0 });
     const [clientEntries, setClientEntries] = useState([]);
+    const [pendingViewAfterApproval, setPendingViewAfterApproval] = useState(null);
 
     const { data: clients, loading: clientsLoading, error: clientsError } = useApi('/api/clients');
     const { post: generatePrediction, loading: predictionLoading } = useApi(null, { autoFetch: false });
@@ -41,8 +44,27 @@ const Dashboard = forwardRef((props, ref) => {
     useImperativeHandle(ref, () => ({
         updateClients: (newClients) => {
             setClientsData(newClients || []);
+        },
+        hasUnsavedPredictions: () => {
+            return predictions.length > 0;
+        },
+        saveAndSwitch: (newPath) => {
+            // Trigger the approve modal
+            setShowApproveModal(true);
+            // Store the view to switch to after approval
+            setPendingViewAfterApproval(newPath);
+        },
+        navigateTo: (path) => {
+            if (onNavigation) {
+                onNavigation(path);
+            } else {
+                navigate(path);
+            }
+        },
+        clearPredictions: () => {
+            setPredictions([]);
         }
-    }), []);
+    }), [predictions, navigate, onNavigation]);
 
     // eslint-disable-next-line no-unused-vars
     const fetchLastMonthData = useCallback(async (clientId, targetMonth) => {
@@ -259,13 +281,6 @@ const Dashboard = forwardRef((props, ref) => {
                                 {formatCurrency(grandTotal)}
                             </div>
                         </div>
-                        {predictions.length > 0 && (
-                            <DownloadButton
-                                predictions={predictions}
-                                clientName={selectedClient?.name || 'Unknown'}
-                                targetMonth={targetMonth}
-                            />
-                        )}
                     </div>
                 </div>
             </div>
@@ -344,6 +359,15 @@ const Dashboard = forwardRef((props, ref) => {
             <div className="w-full">
                 {predictions.length > 0 ? (
                     <div className="space-y-6">
+                        {/* Download Button - Moved above prediction table */}
+                        <div className="flex justify-end">
+                            <DownloadButton
+                                predictions={predictions}
+                                clientName={selectedClient?.name || 'Unknown'}
+                                targetMonth={targetMonth}
+                            />
+                        </div>
+
                         <PredictionsTable
                             predictions={predictions}
                             lastMonthData={lastMonthData}
@@ -397,6 +421,15 @@ const Dashboard = forwardRef((props, ref) => {
                         setShowApproveModal(false);
                         setPredictions([]);
                         alert('Predictions approved and saved successfully!');
+                        // If there's a pending view after approval, switch to it
+                        if (pendingViewAfterApproval) {
+                            if (onNavigation) {
+                                onNavigation(pendingViewAfterApproval);
+                            } else {
+                                navigate(pendingViewAfterApproval);
+                            }
+                            setPendingViewAfterApproval(null);
+                        }
                     }}
                 />
             )}
