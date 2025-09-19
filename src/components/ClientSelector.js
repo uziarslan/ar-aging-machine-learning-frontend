@@ -65,7 +65,7 @@ const ClientSelector = ({ clients, selectedClient, onClientChange, loading, erro
                 const rows = allRows.filter(row => {
                     return !row.some(cell => {
                         const cellValue = cell?.toString().toLowerCase().trim() || '';
-                        return cellValue === 'total' || cellValue === 'totals';
+                        return cellValue.includes('total');
                     });
                 });
 

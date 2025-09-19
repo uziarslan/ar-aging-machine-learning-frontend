@@ -1,20 +1,25 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 
-const PredictionsTable = ({ predictions, lastMonthData, onPredictionsChange, targetTotal, onTargetMismatch }) => {
+function PredictionsTable(props) {
+    const { predictions, lastMonthData, onPredictionsChange, targetTotal, onTargetMismatch } = props;
     const [editablePredictions, setEditablePredictions] = useState([]);
 
     useEffect(() => {
         setEditablePredictions([...predictions]);
     }, [predictions, lastMonthData]);
 
-    const handleCellChange = (index, field, value) => {
+    function handleCellChange(index, field, value) {
         const newPredictions = [...editablePredictions];
-        const newValue = parseFloat(value) || 0;
+        const newValue = Math.round(parseFloat(value) || 0);
 
         if (field === 'total') {
             // Total is derived from buckets; ignore direct edits
             return;
         } else if (field === 'current') {
+            // For override rows, do not allow 'current' to drive 0-30
+            if (newPredictions[index] && newPredictions[index].is_override) {
+                return;
+            }
             // If current is changed, also update 0_30 to match
             newPredictions[index][field] = newValue;
             newPredictions[index]['0_30'] = newValue;
@@ -23,46 +28,49 @@ const PredictionsTable = ({ predictions, lastMonthData, onPredictionsChange, tar
             newPredictions[index][field] = newValue;
         }
 
-        // Recalculate total (sum of aged buckets only)
-        newPredictions[index].total =
-            newPredictions[index]['0_30'] +
-            newPredictions[index]['31_60'] +
-            newPredictions[index]['61_90'] +
-            newPredictions[index]['90_plus'];
+        // Recalculate total (sum of aged buckets only) and round to integer
+        newPredictions[index].total = Math.round(
+            (newPredictions[index]['0_30'] || 0) +
+            (newPredictions[index]['31_60'] || 0) +
+            (newPredictions[index]['61_90'] || 0) +
+            (newPredictions[index]['90_plus'] || 0)
+        );
         // Enforce Current = Total
         newPredictions[index].current = newPredictions[index].total;
 
         setEditablePredictions(newPredictions);
         onPredictionsChange(newPredictions);
-    };
+    }
 
-    const calculateColumnTotal = (field) => {
-        return editablePredictions.reduce((sum, pred) => sum + (pred[field] || 0), 0);
-    };
+    function calculateColumnTotal(field) {
+        return Math.round(editablePredictions.reduce(function (sum, pred) {
+            return sum + (pred[field] || 0);
+        }, 0));
+    }
 
-    const calculateLastMonthColumnTotal = (field) => {
-        if (lastMonthData.length === 0) return 0;
+    function calculateLastMonthColumnTotal(field) {
+        if (!lastMonthData || lastMonthData.length === 0) return 0;
 
-        return lastMonthData.reduce((sum, record) => {
-            let value = 0;
+        return Math.round(lastMonthData.reduce(function (sum, record) {
+            var value = 0;
             if (field === 'current') {
                 value = record.current || record['0_30'] || 0;
             } else if (field === '0_30') {
                 value = record['0_30'] || 0;
             } else if (field === '31_60') {
-                value = record['0_30'] || 0; // Previous month's 0-30 becomes current month's 31-60
+                value = record['0_30'] || 0;
             } else if (field === '61_90') {
-                value = record['31_60'] || 0; // Previous month's 31-60 becomes current month's 61-90
+                value = record['31_60'] || 0;
             } else if (field === '90_plus') {
-                value = (record['61_90'] || 0) + (record['90_plus'] || 0); // Previous month's 61-90 + 90+ becomes current month's 90+
+                value = (record['61_90'] || 0) + (record['90_plus'] || 0);
             } else if (field === 'total') {
                 value = record.total || 0;
             }
             return sum + value;
-        }, 0);
-    };
+        }, 0));
+    }
 
-    const grandTotal = calculateColumnTotal('total');
+    const grandTotal = Math.round(calculateColumnTotal('total'));
     const isTargetMatched = Math.abs(grandTotal - targetTotal) < 0.01;
 
     // Notify parent about target mismatch
@@ -72,122 +80,150 @@ const PredictionsTable = ({ predictions, lastMonthData, onPredictionsChange, tar
         }
     }, [isTargetMatched, grandTotal, targetTotal, onTargetMismatch]);
 
-    // Auto-adjust the largest prediction to match target exactly
-    const adjustToTarget = useCallback(() => {
-        if (!isTargetMatched && editablePredictions.length > 0) {
-            const difference = targetTotal - grandTotal;
-            if (Math.abs(difference) > 0) {
-                // Find the largest prediction and adjust it
-                const largestIdx = editablePredictions.reduce((maxIdx, pred, idx) =>
-                    pred.total > editablePredictions[maxIdx].total ? idx : maxIdx, 0
-                );
+    // Frontend no longer adjusts to target; all adjustments are backend-driven.
 
-                const newPredictions = [...editablePredictions];
-                newPredictions[largestIdx].total += difference;
-                newPredictions[largestIdx].current = newPredictions[largestIdx].total;
-                newPredictions[largestIdx]['0_30'] = newPredictions[largestIdx].total;
-
-                setEditablePredictions(newPredictions);
-                onPredictionsChange(newPredictions);
-            }
-        }
-    }, [isTargetMatched, editablePredictions, targetTotal, grandTotal, onPredictionsChange]);
-
-    // Remove automatic target fixing; keep manual button only
-
-    const formatCurrency = (value) => {
+    function formatCurrency(value) {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: 'USD',
             minimumFractionDigits: 0,
             maximumFractionDigits: 0,
         }).format(value);
-    };
+    }
 
-    // Find matching record from last month's data
-    const findLastMonthRecord = (currentRecord) => {
+    function findLastMonthRecord(currentRecord) {
         if (!lastMonthData || lastMonthData.length === 0) return null;
 
-        // Try exact match first
-        let lastMonthRecord = lastMonthData.find(record =>
-            record.description === currentRecord.description
-        );
+        var lastMonthRecord = lastMonthData.find(function (record) {
+            return record.description === currentRecord.description;
+        });
 
         if (lastMonthRecord) return lastMonthRecord;
 
-        // Try normalized match if exact match fails
-        const normalizeString = (str) => {
+        function normalizeString(str) {
             return str.toLowerCase()
                 .replace(/\s+/g, ' ')
                 .replace(/[.,]/g, '')
                 .trim()
-                .replace(/sloutions/g, 'solutions'); // Handle specific typo
-        };
+                .replace(/sloutions/g, 'solutions');
+        }
 
-        const normalizedCurrent = normalizeString(currentRecord.description);
-        lastMonthRecord = lastMonthData.find(record =>
-            normalizeString(record.description) === normalizedCurrent
-        );
+        var normalizedCurrent = normalizeString(currentRecord.description);
+        lastMonthRecord = lastMonthData.find(function (record) {
+            return normalizeString(record.description) === normalizedCurrent;
+        });
 
         return lastMonthRecord;
-    };
+    }
 
-    // Calculate difference between current and last month value
-    const calculateDifference = (currentValue, lastMonthValue) => {
-        const diff = currentValue - lastMonthValue;
-        const percentage = lastMonthValue !== 0 ? (diff / lastMonthValue) * 100 : 0;
-        return { diff, percentage };
-    };
+    function calculateDifference(currentValue, lastMonthValue) {
+        var diff = currentValue - lastMonthValue;
+        var percentage = lastMonthValue !== 0 ? (diff / lastMonthValue) * 100 : 0;
+        return { diff: diff, percentage: percentage };
+    }
 
-    // Component to display difference with color coding
-    const DifferenceDisplay = ({ currentValue, currentRecord, field }) => {
-        if (lastMonthData.length === 0) {
+    function getRowType(prediction) {
+        // Check if this is a user override (has is_override flag)
+        if (prediction.is_override) {
+            // Check if it's a new entry (no last month data) or an override (has last month data)
+            var lastMonthRecord = findLastMonthRecord(prediction);
+            if (lastMonthRecord) {
+                return 'override'; // User provided amount for existing client -> "New Entry" tag
+            } else {
+                return 'new'; // User provided new client -> "User Override" tag
+            }
+        } else {
+            // Check if it's a carried over client or model-generated
+            var lastMonthRecordOverride = findLastMonthRecord(prediction);
+            if (lastMonthRecordOverride) {
+                return 'carried'; // Existing client carried over with ML aging
+            } else {
+                return 'generated'; // Model-generated new client to meet target
+            }
+        }
+    }
+
+    function getRowTypeTag(type) {
+        switch (type) {
+            case 'carried':
+                return { text: 'Carried Over', color: 'bg-blue-100 text-blue-800' };
+            case 'new':
+                return { text: 'User Added', color: 'bg-green-100 text-green-800' };
+            case 'override':
+                return { text: 'User Set', color: 'bg-purple-100 text-purple-800' };
+            case 'generated':
+                return { text: 'Auto Generated', color: 'bg-orange-100 text-orange-800' };
+            default:
+                return { text: 'Unknown', color: 'bg-gray-100 text-gray-800' };
+        }
+    }
+
+    function getTooltipText(type) {
+        switch (type) {
+            case 'carried':
+                return 'Existing client from previous month with ML aging applied';
+            case 'new':
+                return 'New client added by user (0-30 days only)';
+            case 'override':
+                return 'User provided amount for existing client';
+            case 'generated':
+                return 'Automatically generated by model to meet target';
+            default:
+                return 'Unknown source';
+        }
+    }
+
+    function DifferenceDisplay(props) {
+        var currentValue = props.currentValue;
+        var currentRecord = props.currentRecord;
+        var field = props.field;
+
+        if (!lastMonthData || lastMonthData.length === 0) {
             return null;
         }
 
-        let lastMonthValue = 0;
+        var lastMonthValue = 0;
 
-        // Special case for totals row
         if (currentRecord.description === 'TOTAL') {
             lastMonthValue = calculateLastMonthColumnTotal(field);
         } else {
-            const lastMonthRecord = findLastMonthRecord(currentRecord);
+            var lastMonthRecord = findLastMonthRecord(currentRecord);
             if (!lastMonthRecord) {
                 return null;
             }
 
-            // Get the corresponding last month value based on aging logic
             if (field === 'current') {
                 lastMonthValue = lastMonthRecord.current || lastMonthRecord['0_30'] || 0;
             } else if (field === '0_30') {
                 lastMonthValue = lastMonthRecord['0_30'] || 0;
             } else if (field === '31_60') {
-                lastMonthValue = lastMonthRecord['0_30'] || 0; // Previous month's 0-30 becomes current month's 31-60
+                lastMonthValue = lastMonthRecord['0_30'] || 0;
             } else if (field === '61_90') {
-                lastMonthValue = lastMonthRecord['31_60'] || 0; // Previous month's 31-60 becomes current month's 61-90
+                lastMonthValue = lastMonthRecord['31_60'] || 0;
             } else if (field === '90_plus') {
-                lastMonthValue = (lastMonthRecord['61_90'] || 0) + (lastMonthRecord['90_plus'] || 0); // Previous month's 61-90 + 90+ becomes current month's 90+
+                lastMonthValue = (lastMonthRecord['61_90'] || 0) + (lastMonthRecord['90_plus'] || 0);
             } else if (field === 'total') {
                 lastMonthValue = lastMonthRecord.total || 0;
             }
         }
 
-        const { diff, percentage } = calculateDifference(currentValue, lastMonthValue);
-        const isPositive = diff >= 0;
-
-        const isZero = Math.abs(diff) < 0.01 && Math.abs(percentage) < 0.1;
+        var diffObj = calculateDifference(currentValue, lastMonthValue);
+        var diff = diffObj.diff;
+        var percentage = diffObj.percentage;
+        var isPositive = diff >= 0;
+        var isZero = Math.abs(diff) < 0.01 && Math.abs(percentage) < 0.1;
 
         return (
             <div className="text-xs mt-1">
-                <div className={`font-medium ${isZero ? 'text-gray-400' : (isPositive ? 'text-green-600' : 'text-red-600')}`}>
+                <div className={'font-medium ' + (isZero ? 'text-gray-400' : (isPositive ? 'text-green-600' : 'text-red-600'))}>
                     {isPositive ? '+' : ''}{formatCurrency(diff)}
                 </div>
-                <div className={`text-xs ${isZero ? 'text-gray-400' : (isPositive ? 'text-green-500' : 'text-red-500')}`}>
+                <div className={'text-xs ' + (isZero ? 'text-gray-400' : (isPositive ? 'text-green-500' : 'text-red-500'))}>
                     ({isPositive ? '+' : ''}{percentage.toFixed(1)}%)
                 </div>
             </div>
         );
-    };
+    }
 
     return (
         <div className="card">
@@ -196,7 +232,7 @@ const PredictionsTable = ({ predictions, lastMonthData, onPredictionsChange, tar
                 <div className="flex items-center gap-4">
                     <div className="text-sm">
                         <span className="text-gray-600">Grand Total:</span>
-                        <span className={`ml-2 font-medium ${isTargetMatched ? 'text-success-600' : 'text-danger-600'}`}>
+                        <span className={'ml-2 font-medium ' + (isTargetMatched ? 'text-success-600' : 'text-danger-600')}>
                             {formatCurrency(grandTotal)}
                         </span>
                         {!isTargetMatched && (
@@ -205,15 +241,39 @@ const PredictionsTable = ({ predictions, lastMonthData, onPredictionsChange, tar
                             </span>
                         )}
                     </div>
-                    {!isTargetMatched && (
-                        <button
-                            onClick={adjustToTarget}
-                            className="px-3 py-1 bg-primary-500 text-white text-xs rounded hover:bg-primary-600 transition-colors duration-200"
-                        >
-                            Fix Target Match
-                        </button>
-                    )}
+                    {/* No frontend fix button; backend must match target */}
                 </div>
+            </div>
+
+            {/* Row Type Summary */}
+            <div className="mb-4 flex flex-wrap gap-2">
+                {(() => {
+                    var typeCounts = {};
+                    editablePredictions.forEach(function (prediction) {
+                        var type = getRowType(prediction);
+                        typeCounts[type] = (typeCounts[type] || 0) + 1;
+                    });
+
+                    return Object.keys(typeCounts).map(function (type) {
+                        var tag = getRowTypeTag(type);
+                        var tooltipText = getTooltipText(type);
+                        return (
+                            <div key={type} className="flex items-center gap-2 group relative">
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${tag.color} cursor-help`}>
+                                    {tag.text}
+                                </span>
+                                <span className="text-sm text-gray-600">({typeCounts[type]})</span>
+
+                                {/* Tooltip */}
+                                <div className="absolute left-full top-1/2 transform -translate-y-1/2 ml-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap shadow-xl"
+                                    style={{ zIndex: 99999 }}>
+                                    {tooltipText}
+                                    <div className="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-gray-900"></div>
+                                </div>
+                            </div>
+                        );
+                    });
+                })()}
             </div>
 
             <div className="overflow-x-auto">
@@ -230,121 +290,132 @@ const PredictionsTable = ({ predictions, lastMonthData, onPredictionsChange, tar
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                        {editablePredictions.map((prediction, index) => (
-                            <tr key={index} className="hover:bg-gray-50">
-                                <td className="table-cell font-medium text-gray-900">
-                                    {prediction.description}
-                                </td>
-                                <td className="table-cell">
-                                    <div>
-                                        <input
-                                            type="number"
-                                            value={prediction.current || prediction['0_30']}
-                                            onChange={(e) => handleCellChange(index, 'current', e.target.value)}
-                                            className="table-input"
-                                            min="0"
-                                            step="1"
-                                            onWheel={(e) => e.currentTarget.blur()}
-                                        />
-                                        <DifferenceDisplay
-                                            currentValue={prediction.current || prediction['0_30']}
-                                            currentRecord={prediction}
-                                            field="current"
-                                        />
-                                    </div>
-                                </td>
-                                <td className="table-cell">
-                                    <div>
-                                        <input
-                                            type="number"
-                                            value={prediction['0_30']}
-                                            onChange={(e) => handleCellChange(index, '0_30', e.target.value)}
-                                            className="table-input"
-                                            min="0"
-                                            step="1"
-                                            onWheel={(e) => e.currentTarget.blur()}
-                                        />
-                                        <DifferenceDisplay
-                                            currentValue={prediction['0_30']}
-                                            currentRecord={prediction}
-                                            field="0_30"
-                                        />
-                                    </div>
-                                </td>
-                                <td className="table-cell">
-                                    <div>
-                                        <input
-                                            type="number"
-                                            value={prediction['31_60']}
-                                            onChange={(e) => handleCellChange(index, '31_60', e.target.value)}
-                                            className="table-input"
-                                            min="0"
-                                            step="1"
-                                            onWheel={(e) => e.currentTarget.blur()}
-                                        />
-                                        <DifferenceDisplay
-                                            currentValue={prediction['31_60']}
-                                            currentRecord={prediction}
-                                            field="31_60"
-                                        />
-                                    </div>
-                                </td>
-                                <td className="table-cell">
-                                    <div>
-                                        <input
-                                            type="number"
-                                            value={prediction['61_90']}
-                                            onChange={(e) => handleCellChange(index, '61_90', e.target.value)}
-                                            className="table-input"
-                                            min="0"
-                                            step="1"
-                                            onWheel={(e) => e.currentTarget.blur()}
-                                        />
-                                        <DifferenceDisplay
-                                            currentValue={prediction['61_90']}
-                                            currentRecord={prediction}
-                                            field="61_90"
-                                        />
-                                    </div>
-                                </td>
-                                <td className="table-cell">
-                                    <div>
-                                        <input
-                                            type="number"
-                                            value={prediction['90_plus']}
-                                            onChange={(e) => handleCellChange(index, '90_plus', e.target.value)}
-                                            className="table-input"
-                                            min="0"
-                                            step="1"
-                                            onWheel={(e) => e.currentTarget.blur()}
-                                        />
-                                        <DifferenceDisplay
-                                            currentValue={prediction['90_plus']}
-                                            currentRecord={prediction}
-                                            field="90_plus"
-                                        />
-                                    </div>
-                                </td>
-                                <td className="table-cell">
-                                    <div>
-                                        <input
-                                            type="number"
-                                            value={prediction.total}
-                                            onChange={(e) => handleCellChange(index, 'total', e.target.value)}
-                                            className="table-input font-medium"
-                                            min="0"
-                                            step="1"
-                                            onWheel={(e) => e.currentTarget.blur()}
-                                        />
-                                        <DifferenceDisplay
-                                            currentValue={prediction.total}
-                                            currentRecord={prediction}
-                                            field="total"
-                                        />
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
+                        {editablePredictions.map(function (prediction, index) {
+                            var rowType = getRowType(prediction);
+                            var tag = getRowTypeTag(rowType);
+
+                            return (
+                                <tr key={index} className="hover:bg-gray-50">
+                                    <td className="table-cell font-medium text-gray-900">
+                                        <div className="flex items-center gap-2">
+                                            <span>{prediction.description}</span>
+                                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${tag.color}`}>
+                                                {tag.text}
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td className="table-cell">
+                                        <div>
+                                            <input
+                                                type="number"
+                                                value={Math.round(prediction.current || prediction['0_30'] || 0)}
+                                                onChange={function (e) { handleCellChange(index, 'current', e.target.value); }}
+                                                className="table-input"
+                                                min="0"
+                                                step="1"
+                                                onWheel={function (e) { e.currentTarget.blur(); }}
+                                            />
+                                            <DifferenceDisplay
+                                                currentValue={prediction.current || prediction['0_30']}
+                                                currentRecord={prediction}
+                                                field="current"
+                                            />
+                                        </div>
+                                    </td>
+                                    <td className="table-cell">
+                                        <div>
+                                            <input
+                                                type="number"
+                                                value={Math.round(prediction['0_30'] || 0)}
+                                                onChange={function (e) { handleCellChange(index, '0_30', e.target.value); }}
+                                                className="table-input"
+                                                min="0"
+                                                step="1"
+                                                onWheel={function (e) { e.currentTarget.blur(); }}
+                                                disabled={prediction.is_override}
+                                            />
+                                            <DifferenceDisplay
+                                                currentValue={prediction['0_30']}
+                                                currentRecord={prediction}
+                                                field="0_30"
+                                            />
+                                        </div>
+                                    </td>
+                                    <td className="table-cell">
+                                        <div>
+                                            <input
+                                                type="number"
+                                                value={Math.round(prediction['31_60'] || 0)}
+                                                onChange={function (e) { handleCellChange(index, '31_60', e.target.value); }}
+                                                className="table-input"
+                                                min="0"
+                                                step="1"
+                                                onWheel={function (e) { e.currentTarget.blur(); }}
+                                            />
+                                            <DifferenceDisplay
+                                                currentValue={prediction['31_60']}
+                                                currentRecord={prediction}
+                                                field="31_60"
+                                            />
+                                        </div>
+                                    </td>
+                                    <td className="table-cell">
+                                        <div>
+                                            <input
+                                                type="number"
+                                                value={Math.round(prediction['61_90'] || 0)}
+                                                onChange={function (e) { handleCellChange(index, '61_90', e.target.value); }}
+                                                className="table-input"
+                                                min="0"
+                                                step="1"
+                                                onWheel={function (e) { e.currentTarget.blur(); }}
+                                            />
+                                            <DifferenceDisplay
+                                                currentValue={prediction['61_90']}
+                                                currentRecord={prediction}
+                                                field="61_90"
+                                            />
+                                        </div>
+                                    </td>
+                                    <td className="table-cell">
+                                        <div>
+                                            <input
+                                                type="number"
+                                                value={Math.round(prediction['90_plus'] || 0)}
+                                                onChange={function (e) { handleCellChange(index, '90_plus', e.target.value); }}
+                                                className="table-input"
+                                                min="0"
+                                                step="1"
+                                                onWheel={function (e) { e.currentTarget.blur(); }}
+                                            />
+                                            <DifferenceDisplay
+                                                currentValue={prediction['90_plus']}
+                                                currentRecord={prediction}
+                                                field="90_plus"
+                                            />
+                                        </div>
+                                    </td>
+                                    <td className="table-cell">
+                                        <div>
+                                            <input
+                                                type="number"
+                                                value={Math.round(prediction.total || 0)}
+                                                onChange={function (e) { handleCellChange(index, 'total', e.target.value); }}
+                                                className="table-input font-medium"
+                                                min="0"
+                                                step="1"
+                                                onWheel={function (e) { e.currentTarget.blur(); }}
+                                            />
+                                            <DifferenceDisplay
+                                                currentValue={prediction.total}
+                                                currentRecord={prediction}
+                                                field="total"
+                                            />
+                                        </div>
+                                    </td>
+                                </tr>
+                            );
+                        })}
                     </tbody>
                     <tfoot className="bg-gray-50">
                         <tr className="font-medium">
@@ -417,11 +488,8 @@ const PredictionsTable = ({ predictions, lastMonthData, onPredictionsChange, tar
                     </tfoot>
                 </table>
             </div>
-
         </div>
     );
-};
+}
 
 export default PredictionsTable;
-
-
