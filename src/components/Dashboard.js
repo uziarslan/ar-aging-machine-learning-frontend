@@ -12,7 +12,6 @@ const Dashboard = forwardRef(({ onNavigation }, ref) => {
     const navigate = useNavigate();
     const [selectedClient, setSelectedClient] = useState(null);
     const [targetMonth, setTargetMonth] = useState('');
-    const [targetTotal, setTargetTotal] = useState('');
     const [carryThreshold, setCarryThreshold] = useState(0.2);
     const [predictions, setPredictions] = useState([]);
     const [lastMonthData, setLastMonthData] = useState([]);
@@ -24,6 +23,14 @@ const Dashboard = forwardRef(({ onNavigation }, ref) => {
     const [targetMismatch, setTargetMismatch] = useState({ show: false, grandTotal: 0, targetTotal: 0 });
     const [clientEntries, setClientEntries] = useState([]);
     const [pendingViewAfterApproval, setPendingViewAfterApproval] = useState(null);
+
+    // Column-specific targets state (now default)
+    const [columnTargets, setColumnTargets] = useState({
+        b0_30: '',
+        b31_60: '',
+        b61_90: '',
+        b90_plus: ''
+    });
 
     const { data: clients, loading: clientsLoading, error: clientsError } = useApi('/api/clients');
     const { post: generatePrediction, loading: predictionLoading } = useApi(null, { autoFetch: false });
@@ -191,8 +198,19 @@ const Dashboard = forwardRef(({ onNavigation }, ref) => {
     };
 
     const handleGenerate = async () => {
-        if (!selectedClient || !targetMonth || !targetTotal) {
+        if (!selectedClient || !targetMonth) {
             alert('Please fill in all required fields');
+            return;
+        }
+
+        // Calculate target total from column targets
+        const targetTotal = (parseFloat(columnTargets.b0_30 || 0) +
+            parseFloat(columnTargets.b31_60 || 0) +
+            parseFloat(columnTargets.b61_90 || 0) +
+            parseFloat(columnTargets.b90_plus || 0));
+
+        if (targetTotal <= 0) {
+            alert('Please enter values for at least one column target');
             return;
         }
 
@@ -207,15 +225,40 @@ const Dashboard = forwardRef(({ onNavigation }, ref) => {
                 }))
                 .filter(e => e.description !== '' && e.amount > 0);
 
-            const response = await generatePrediction('/api/predict', {
+            // Prepare request payload
+            const requestPayload = {
                 client_id: selectedClient.id,
                 target_month: targetMonth,
                 target_total: parseFloat(targetTotal),
                 carry_threshold: carryThreshold,
                 additional_entries: validEntries
-            });
+            };
+
+            // Add column targets (always enabled now)
+            requestPayload.column_targets = {
+                b0_30: parseFloat(columnTargets.b0_30 || 0),
+                b31_60: parseFloat(columnTargets.b31_60 || 0),
+                b61_90: parseFloat(columnTargets.b61_90 || 0),
+                b90_plus: parseFloat(columnTargets.b90_plus || 0)
+            };
+
+            const response = await generatePrediction('/api/predict', requestPayload);
 
             if (response) {
+                console.log('DEBUG: Backend response received:', JSON.stringify(response, null, 2));
+                console.log('DEBUG: Predictions count:', response.predictions?.length);
+                if (response.predictions && response.predictions.length > 0) {
+                    console.log('DEBUG: Sample prediction from backend:', JSON.stringify(response.predictions[0], null, 2));
+                    // Calculate totals from backend data
+                    const backendTotals = {
+                        '0_30': response.predictions.reduce((sum, p) => sum + (p['0_30'] || 0), 0),
+                        '31_60': response.predictions.reduce((sum, p) => sum + (p['31_60'] || 0), 0),
+                        '61_90': response.predictions.reduce((sum, p) => sum + (p['61_90'] || 0), 0),
+                        '90_plus': response.predictions.reduce((sum, p) => sum + (p['90_plus'] || 0), 0),
+                        'total': response.predictions.reduce((sum, p) => sum + (p['total'] || 0), 0)
+                    };
+                    console.log('DEBUG: Backend totals:', JSON.stringify(backendTotals, null, 2));
+                }
                 setPredictions(response.predictions || []);
                 setModelInfo(response.model_meta);
             }
@@ -245,6 +288,15 @@ const Dashboard = forwardRef(({ onNavigation }, ref) => {
         });
     }, []);
 
+    // Column targets handlers
+    const handleColumnTargetsChange = (field, value) => {
+        setColumnTargets(prev => ({
+            ...prev,
+            [field]: value
+        }));
+    };
+
+
     const handleApprove = () => {
         if (predictions.length === 0) {
             alert('No predictions to approve');
@@ -263,7 +315,11 @@ const Dashboard = forwardRef(({ onNavigation }, ref) => {
     };
 
     const grandTotal = predictions.reduce((sum, pred) => sum + (pred.total || 0), 0);
-    const isTargetMatched = Math.abs(grandTotal - parseFloat(targetTotal || 0)) < 0.01;
+    const calculatedTargetTotal = (parseFloat(columnTargets.b0_30 || 0) +
+        parseFloat(columnTargets.b31_60 || 0) +
+        parseFloat(columnTargets.b61_90 || 0) +
+        parseFloat(columnTargets.b90_plus || 0));
+    const isTargetMatched = Math.abs(grandTotal - calculatedTargetTotal) < 0.01;
 
     return (
         <div className="space-y-4">
@@ -316,7 +372,7 @@ const Dashboard = forwardRef(({ onNavigation }, ref) => {
             <StatsCards
                 clientsCount={clientsData?.length || 0}
                 predictionsCount={predictions.length}
-                targetTotal={parseFloat(targetTotal || 0)}
+                targetTotal={calculatedTargetTotal}
                 grandTotal={grandTotal}
                 isTargetMatched={isTargetMatched}
             />
@@ -341,16 +397,16 @@ const Dashboard = forwardRef(({ onNavigation }, ref) => {
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                     <PredictionForm
                         targetMonth={targetMonth}
-                        targetTotal={targetTotal}
                         carryThreshold={carryThreshold}
                         onTargetMonthChange={handleTargetMonthChange}
-                        onTargetTotalChange={setTargetTotal}
                         onCarryThresholdChange={setCarryThreshold}
                         onGenerate={handleGenerate}
                         isGenerating={isGenerating || predictionLoading}
                         disabled={!selectedClient}
                         minTargetMonth={minTargetMonth}
                         clientLastMonth={clientLastMonth}
+                        columnTargets={columnTargets}
+                        onColumnTargetsChange={handleColumnTargetsChange}
                     />
                 </div>
             </div>
@@ -373,7 +429,7 @@ const Dashboard = forwardRef(({ onNavigation }, ref) => {
                             lastMonthData={lastMonthData}
                             onPredictionsChange={handlePredictionsChange}
                             onTargetMismatch={handleTargetMismatch}
-                            targetTotal={parseFloat(targetTotal || 0)}
+                            targetTotal={calculatedTargetTotal}
                         />
 
                         <div className="flex justify-end space-x-3">

@@ -5,6 +5,19 @@ function PredictionsTable(props) {
     const [editablePredictions, setEditablePredictions] = useState([]);
 
     useEffect(() => {
+        console.log('DEBUG: PredictionsTable received predictions:', predictions.length);
+        if (predictions.length > 0) {
+            console.log('DEBUG: Sample prediction in PredictionsTable:', JSON.stringify(predictions[0], null, 2));
+            // Calculate totals from received predictions
+            const receivedTotals = {
+                '0_30': predictions.reduce((sum, p) => sum + (p['0_30'] || 0), 0),
+                '31_60': predictions.reduce((sum, p) => sum + (p['31_60'] || 0), 0),
+                '61_90': predictions.reduce((sum, p) => sum + (p['61_90'] || 0), 0),
+                '90_plus': predictions.reduce((sum, p) => sum + (p['90_plus'] || 0), 0),
+                'total': predictions.reduce((sum, p) => sum + (p['total'] || 0), 0)
+            };
+            console.log('DEBUG: Received totals in PredictionsTable:', JSON.stringify(receivedTotals, null, 2));
+        }
         setEditablePredictions([...predictions]);
     }, [predictions, lastMonthData]);
 
@@ -43,31 +56,56 @@ function PredictionsTable(props) {
     }
 
     function calculateColumnTotal(field) {
-        return Math.round(editablePredictions.reduce(function (sum, pred) {
+        const total = Math.round(editablePredictions.reduce(function (sum, pred) {
             return sum + (pred[field] || 0);
         }, 0));
+
+        // Debug logging
+        console.log(`DEBUG: calculateColumnTotal(${field}) = ${total}`);
+        console.log(`DEBUG: editablePredictions length = ${editablePredictions.length}`);
+        if (editablePredictions.length > 0) {
+            console.log(`DEBUG: Sample prediction:`, editablePredictions[0]);
+        }
+
+        return total;
     }
 
     function calculateLastMonthColumnTotal(field) {
         if (!lastMonthData || lastMonthData.length === 0) return 0;
 
-        return Math.round(lastMonthData.reduce(function (sum, record) {
+        // Shifted comparison mapping (prev→next):
+        // next 0-30 compares to prev current
+        // next 31-60 compares to prev 0-30
+        // next 61-90 compares to prev 31-60
+        // next 90+ compares to prev 61-90 + 90+
+        const total = Math.round(lastMonthData.reduce(function (sum, record) {
             var value = 0;
             if (field === 'current') {
-                value = record.current || record['0_30'] || 0;
+                // For current, compare to previous total/current
+                value = (record.total || record.current || 0);
             } else if (field === '0_30') {
-                value = record['0_30'] || 0;
+                // 0-30 compares to previous 0-30
+                value = (record['0_30'] || 0);
             } else if (field === '31_60') {
-                value = record['0_30'] || 0;
+                value = (record['0_30'] || 0);
             } else if (field === '61_90') {
-                value = record['31_60'] || 0;
+                value = (record['31_60'] || 0);
             } else if (field === '90_plus') {
                 value = (record['61_90'] || 0) + (record['90_plus'] || 0);
             } else if (field === 'total') {
-                value = record.total || 0;
+                value = (record.total || 0);
             }
             return sum + value;
         }, 0));
+
+        // Debug logging
+        console.log(`DEBUG: calculateLastMonthColumnTotal(${field}) = ${total}`);
+        console.log(`DEBUG: lastMonthData length = ${lastMonthData.length}`);
+        if (lastMonthData.length > 0) {
+            console.log(`DEBUG: Sample record:`, lastMonthData[0]);
+        }
+
+        return total;
     }
 
     const grandTotal = Math.round(calculateColumnTotal('total'));
@@ -193,8 +231,9 @@ function PredictionsTable(props) {
             }
 
             if (field === 'current') {
-                lastMonthValue = lastMonthRecord.current || lastMonthRecord['0_30'] || 0;
+                lastMonthValue = lastMonthRecord.total || lastMonthRecord.current || 0;
             } else if (field === '0_30') {
+                // 0-30 compares to previous 0-30
                 lastMonthValue = lastMonthRecord['0_30'] || 0;
             } else if (field === '31_60') {
                 lastMonthValue = lastMonthRecord['0_30'] || 0;
