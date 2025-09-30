@@ -12,7 +12,8 @@ const PredictionForm = ({
     clientLastMonth,
     // Column-specific target props (now default)
     columnTargets,
-    onColumnTargetsChange
+    onColumnTargetsChange,
+    lastMonthData
 }) => {
     const formatCurrency = (value) => {
         return new Intl.NumberFormat('en-US', {
@@ -21,6 +22,47 @@ const PredictionForm = ({
             minimumFractionDigits: 0,
             maximumFractionDigits: 0,
         }).format(value);
+    };
+
+    // Function to calculate previous month totals for column-specific targets
+    const calculateLastMonthColumnTotal = (field) => {
+        if (!lastMonthData || lastMonthData.length === 0) return 0;
+
+        const total = Math.round(lastMonthData.reduce(function (sum, record) {
+            var value = 0;
+            if (field === 'b31_60') {
+                // 31-60 Days Target shows previous month's 0-30 total
+                value = (record['0_30'] || 0);
+            } else if (field === 'b61_90') {
+                // 61-90 Days Target shows previous month's 31-60 total
+                value = (record['31_60'] || 0);
+            } else if (field === 'b90_plus') {
+                // 90+ Days Target shows previous month's 61-90 + 90+ total
+                value = (record['61_90'] || 0) + (record['90_plus'] || 0);
+            }
+            return sum + value;
+        }, 0));
+
+        return total;
+    };
+
+    // Function to calculate percentage difference between current target and previous month
+    const calculatePercentageDifference = (field) => {
+        if (!lastMonthData || lastMonthData.length === 0) return null;
+
+        const currentTarget = parseFloat(columnTargets?.[field] || 0);
+        const previousMonthTotal = calculateLastMonthColumnTotal(field);
+
+        if (previousMonthTotal === 0) return null;
+
+        const percentage = ((currentTarget - previousMonthTotal) / previousMonthTotal) * 100;
+        return percentage;
+    };
+
+    // Function to get color class for percentage difference
+    const getPercentageColorClass = (percentage) => {
+        if (percentage === null || Math.abs(percentage) < 0.1) return 'text-gray-500';
+        return percentage >= 0 ? 'text-green-600' : 'text-red-600';
     };
 
     return (
@@ -102,17 +144,38 @@ const PredictionForm = ({
                                         type="number"
                                         value={columnTargets?.b31_60 || ''}
                                         onChange={(e) => onColumnTargetsChange('b31_60', e.target.value)}
-                                        className="input-field pl-7"
+                                        className="input-field pl-7 pr-20"
                                         placeholder="0"
                                         min="0"
                                         step="1"
                                         onWheel={(e) => e.currentTarget.blur()}
                                     />
+                                    {/* Percentage display */}
+                                    {lastMonthData && lastMonthData.length > 0 && (() => {
+                                        const percentage = calculatePercentageDifference('b31_60');
+                                        if (percentage !== null) {
+                                            return (
+                                                <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                                                    <span className={`text-sm font-bold ${getPercentageColorClass(percentage)} bg-white px-1 rounded-md shadow-sm`}>
+                                                        {percentage >= 0 ? '+' : ''}{percentage.toFixed(1)}%
+                                                    </span>
+                                                </div>
+                                            );
+                                        }
+                                        return null;
+                                    })()}
                                 </div>
                                 {columnTargets?.b31_60 && (
                                     <p className="text-sm text-gray-600 mt-1">
                                         {formatCurrency(parseFloat(columnTargets.b31_60) || 0)}
                                     </p>
+                                )}
+                                {lastMonthData && lastMonthData.length > 0 && (
+                                    <div className="mt-1">
+                                        <p className="text-xs text-blue-600 font-medium">
+                                            Prev Month (0-30): {formatCurrency(calculateLastMonthColumnTotal('b31_60'))}
+                                        </p>
+                                    </div>
                                 )}
                             </div>
 
@@ -129,17 +192,38 @@ const PredictionForm = ({
                                         type="number"
                                         value={columnTargets?.b61_90 || ''}
                                         onChange={(e) => onColumnTargetsChange('b61_90', e.target.value)}
-                                        className="input-field pl-7"
+                                        className="input-field pl-7 pr-20"
                                         placeholder="0"
                                         min="0"
                                         step="1"
                                         onWheel={(e) => e.currentTarget.blur()}
                                     />
+                                    {/* Percentage display */}
+                                    {lastMonthData && lastMonthData.length > 0 && (() => {
+                                        const percentage = calculatePercentageDifference('b61_90');
+                                        if (percentage !== null) {
+                                            return (
+                                                <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                                                    <span className={`text-sm font-bold ${getPercentageColorClass(percentage)} bg-white px-1 rounded-md shadow-sm`}>
+                                                        {percentage >= 0 ? '+' : ''}{percentage.toFixed(1)}%
+                                                    </span>
+                                                </div>
+                                            );
+                                        }
+                                        return null;
+                                    })()}
                                 </div>
                                 {columnTargets?.b61_90 && (
                                     <p className="text-sm text-gray-600 mt-1">
                                         {formatCurrency(parseFloat(columnTargets.b61_90) || 0)}
                                     </p>
+                                )}
+                                {lastMonthData && lastMonthData.length > 0 && (
+                                    <div className="mt-1">
+                                        <p className="text-xs text-blue-600 font-medium">
+                                            Prev Month (31-60): {formatCurrency(calculateLastMonthColumnTotal('b61_90'))}
+                                        </p>
+                                    </div>
                                 )}
                             </div>
 
@@ -156,17 +240,38 @@ const PredictionForm = ({
                                         type="number"
                                         value={columnTargets?.b90_plus || ''}
                                         onChange={(e) => onColumnTargetsChange('b90_plus', e.target.value)}
-                                        className="input-field pl-7"
+                                        className="input-field pl-7 pr-20"
                                         placeholder="0"
                                         min="0"
                                         step="1"
                                         onWheel={(e) => e.currentTarget.blur()}
                                     />
+                                    {/* Percentage display */}
+                                    {lastMonthData && lastMonthData.length > 0 && (() => {
+                                        const percentage = calculatePercentageDifference('b90_plus');
+                                        if (percentage !== null) {
+                                            return (
+                                                <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                                                    <span className={`text-sm font-bold ${getPercentageColorClass(percentage)} bg-white px-1 rounded-md shadow-sm`}>
+                                                        {percentage >= 0 ? '+' : ''}{percentage.toFixed(1)}%
+                                                    </span>
+                                                </div>
+                                            );
+                                        }
+                                        return null;
+                                    })()}
                                 </div>
                                 {columnTargets?.b90_plus && (
                                     <p className="text-sm text-gray-600 mt-1">
                                         {formatCurrency(parseFloat(columnTargets.b90_plus) || 0)}
                                     </p>
+                                )}
+                                {lastMonthData && lastMonthData.length > 0 && (
+                                    <div className="mt-1">
+                                        <p className="text-xs text-blue-600 font-medium">
+                                            Prev Month (61-90 + 90+): {formatCurrency(calculateLastMonthColumnTotal('b90_plus'))}
+                                        </p>
+                                    </div>
                                 )}
                             </div>
                         </div>

@@ -407,6 +407,7 @@ const Dashboard = forwardRef(({ onNavigation }, ref) => {
                         clientLastMonth={clientLastMonth}
                         columnTargets={columnTargets}
                         onColumnTargetsChange={handleColumnTargetsChange}
+                        lastMonthData={lastMonthData}
                     />
                 </div>
             </div>
