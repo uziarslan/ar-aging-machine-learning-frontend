@@ -23,7 +23,7 @@ const StatsCards = ({ clientsCount, predictionsCount, targetTotal, grandTotal, i
             description: 'Active clients with trained models'
         },
         {
-            title: 'Predictions Generated',
+            title: 'Results Generated',
             value: predictionsCount,
             icon: (
                 <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -31,7 +31,7 @@ const StatsCards = ({ clientsCount, predictionsCount, targetTotal, grandTotal, i
                 </svg>
             ),
             color: 'green',
-            description: 'Current prediction set'
+            description: 'Current result set'
         },
         {
             title: 'Target Total',

@@ -3,19 +3,34 @@ import { useLocation } from 'react-router-dom';
 
 const Sidebar = ({ isOpen, onClose, onNavigation }) => {
     const location = useLocation();
+    const [sidebarHeight, setSidebarHeight] = React.useState('calc(100vh - 0px)');
+    const [isMobile, setIsMobile] = React.useState(typeof window !== 'undefined' ? window.innerWidth < 1024 : true);
+
+    React.useEffect(() => {
+        const updateHeight = () => {
+            setIsMobile(typeof window !== 'undefined' ? window.innerWidth < 1024 : true);
+            const header = document.querySelector('header');
+            const headerHeight = header ? header.offsetHeight : 0;
+            setSidebarHeight(`calc(100vh - ${headerHeight}px)`);
+        };
+
+        updateHeight();
+        window.addEventListener('resize', updateHeight);
+        return () => window.removeEventListener('resize', updateHeight);
+    }, []);
 
     const menuItems = [
         {
             id: 'dashboard',
             name: 'Dashboard',
-            path: '/',
+            path: '/dashboard',
             icon: (
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6H8V5z" />
                 </svg>
             ),
-            description: 'Generate predictions'
+            description: 'Generate results'
         },
         {
             id: 'clients',
@@ -42,12 +57,17 @@ const Sidebar = ({ isOpen, onClose, onNavigation }) => {
             )}
 
             {/* Sidebar */}
-            <div className={`
-        fixed inset-y-0 left-0 z-30 w-64 bg-white shadow-lg transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 lg:shadow-none
-        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-      `}>
-                <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
-                    <h2 className="text-lg font-semibold text-gray-900">Navigation</h2>
+            <div
+                className={`
+                    fixed left-0 z-30 w-64 bg-white shadow-lg transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:shadow-none
+                    ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+                `}
+                style={{
+                    height: isMobile ? '100vh' : sidebarHeight,
+                    top: window.innerWidth >= 1024 ? '0px' : '0px'
+                }}
+            >
+                <div className="flex items-center justify-end h-12 px-4 border-b border-gray-200 lg:hidden">
                     <button
                         onClick={onClose}
                         className="lg:hidden p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors duration-200"
@@ -59,7 +79,7 @@ const Sidebar = ({ isOpen, onClose, onNavigation }) => {
                     </button>
                 </div>
 
-                <nav className="mt-6 px-3">
+                <nav className="px-3 pt-3 flex-1 overflow-y-auto">
                     <div className="space-y-1">
                         {menuItems.map((item) => {
                             const isActive = location.pathname === item.path;
@@ -94,9 +114,9 @@ const Sidebar = ({ isOpen, onClose, onNavigation }) => {
                 </nav>
 
                 {/* Footer */}
-                <div className="absolute bottom-0 w-full p-4 border-t border-gray-200">
+                <div className="w-full p-4 border-t border-gray-200 flex-shrink-0">
                     <div className="text-xs text-gray-500 text-center">
-                        <p>AR Aging Predictions</p>
+                        <p>AR Aging</p>
                         <p>v1.0.0</p>
                     </div>
                 </div>

@@ -5,9 +5,14 @@ import Clients from './components/Clients';
 import UploadModal from './components/UploadModal';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
+import Login from './Pages/Login';
+import Signup from './Pages/Signup';
+import { useContext } from 'react';
+import { AuthContext } from './Context/AuthContext';
 
 // Main App Content Component
 function AppContent() {
+    const { user, logout, isLoading } = useContext(AuthContext);
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
@@ -62,7 +67,7 @@ function AppContent() {
     // Function to handle navigation with unsaved predictions check
     const handleNavigation = useCallback((newPath) => {
         // Check if there are unsaved predictions
-        if (location.pathname === '/' && dashboardRef.current) {
+        if (location.pathname === '/dashboard' && dashboardRef.current) {
             const hasUnsavedPredictions = dashboardRef.current.hasUnsavedPredictions();
             if (hasUnsavedPredictions) {
                 setPendingView(newPath);
@@ -78,55 +83,68 @@ function AppContent() {
         setPendingView(null);
     };
 
+    // Route guards: redirect unauthenticated users away from protected routes, and redirect authenticated users away from auth routes
+    React.useEffect(() => {
+        if (isLoading) return;
+        const path = location.pathname;
+        const isAuthRoute = path === '/' || path === '/signup';
+        if (!user && !isAuthRoute) {
+            navigate('/', { replace: true });
+        } else if (user && isAuthRoute) {
+            navigate('/dashboard', { replace: true });
+        }
+    }, [user, isLoading, location.pathname, navigate]);
+
+    // Public routes (no header/sidebar)
+    if (location.pathname === '/' || location.pathname === '/signup') {
+        return (
+            <div className="min-h-screen bg-gray-50">
+                <div className="p-2 sm:p-4 min-w-0">
+                    <Routes>
+                        <Route path="/" element={<Login />} />
+                        <Route path="/signup" element={<Signup />} />
+                    </Routes>
+                </div>
+            </div>
+        );
+    }
+
+    // Dashboard layout for protected routes
     return (
         <div className="min-h-screen bg-gray-50">
-            {/* Header */}
             <Header
                 onMenuClick={() => setSidebarOpen(!sidebarOpen)}
                 onUploadClick={() => setIsUploadModalOpen(true)}
+                onLogout={logout}
+                user={user}
             />
-
             <div className="flex">
-                {/* Sidebar */}
                 <Sidebar
                     isOpen={sidebarOpen}
                     onClose={() => setSidebarOpen(false)}
                     onNavigation={handleNavigation}
                 />
-
-                {/* Main Content */}
                 <main className={`flex-1 transition-all duration-300 overflow-hidden ${sidebarOpen && !isMobile ? 'lg:ml-0' : ''}`}>
                     <div className="p-2 sm:p-4 min-w-0">
                         <Routes>
-                            <Route path="/" element={<Dashboard ref={dashboardRef} onNavigation={handleNavigation} />} />
+                            <Route path="/dashboard" element={<Dashboard ref={dashboardRef} onNavigation={handleNavigation} />} />
                             <Route path="/clients" element={<Clients onAccordionExpand={handleAccordionExpand} />} />
                         </Routes>
                     </div>
                 </main>
             </div>
-
-            {/* Upload Modal */}
             {isUploadModalOpen && (
                 <UploadModal
                     onClose={() => setIsUploadModalOpen(false)}
                     onSuccess={(result) => {
                         setIsUploadModalOpen(false);
-                        navigate('/');
-                        // Update client list with data from upload response
+                        navigate('/dashboard');
                         if (dashboardRef.current && result.clients) {
                             dashboardRef.current.updateClients(result.clients);
-                        }
-                        // Show success message
-                        if (result && result.records_processed) {
-                            setTimeout(() => {
-                                alert(`Success! Processed ${result.records_processed} records and trained model.`);
-                            }, 100);
                         }
                     }}
                 />
             )}
-
-            {/* Unsaved Predictions Dialog */}
             {showUnsavedDialog && (
                 <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50">
                     <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
@@ -135,30 +153,13 @@ function AppContent() {
                                 <svg className="h-6 w-6 text-amber-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                                 </svg>
-                                <h3 className="text-lg font-semibold text-gray-900">Unsaved Predictions</h3>
+                                <h3 className="text-lg font-semibold text-gray-900">Unsaved Changes</h3>
                             </div>
-                            <p className="text-gray-600 mb-6">
-                                You have unsaved predictions. Would you like to save and retrain the model before switching tabs?
-                            </p>
+                            <p className="text-gray-600 mb-6">You have unsaved changes. Would you like to save before switching tabs?</p>
                             <div className="flex justify-end space-x-3">
-                                <button
-                                    onClick={handleCancelSwitch}
-                                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleSkipAndSwitch}
-                                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-                                >
-                                    Skip & Switch
-                                </button>
-                                <button
-                                    onClick={handleSaveAndSwitch}
-                                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                                >
-                                    Save & Switch
-                                </button>
+                                <button onClick={handleCancelSwitch} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">Cancel</button>
+                                <button onClick={handleSkipAndSwitch} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">Skip & Switch</button>
+                                <button onClick={handleSaveAndSwitch} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">Save & Switch</button>
                             </div>
                         </div>
                     </div>

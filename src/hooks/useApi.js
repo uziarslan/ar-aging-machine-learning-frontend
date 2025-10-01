@@ -21,9 +21,10 @@ const useApi = (endpoint, options = {}) => {
             setData(response.data);
             return response.data;
         } catch (err) {
-            const errorMessage = err.response?.data?.detail || err.message || 'An error occurred';
+            const statusText = navigator.onLine ? 'Server unavailable' : 'Offline';
+            const errorMessage = err?.response?.data?.detail || statusText;
             setError(errorMessage);
-            throw new Error(errorMessage);
+            return null;
         } finally {
             setLoading(false);
         }
@@ -42,9 +43,10 @@ const useApi = (endpoint, options = {}) => {
             setData(response.data);
             return response.data;
         } catch (err) {
-            const errorMessage = err.response?.data?.detail || err.message || 'An error occurred';
+            const statusText = navigator.onLine ? 'Server unavailable' : 'Offline';
+            const errorMessage = err?.response?.data?.detail || statusText;
             setError(errorMessage);
-            throw new Error(errorMessage);
+            return null;
         } finally {
             setLoading(false);
         }
@@ -64,9 +66,10 @@ const useApi = (endpoint, options = {}) => {
             setData(response.data);
             return response.data;
         } catch (err) {
-            const errorMessage = err.response?.data?.detail || err.message || 'An error occurred';
+            const statusText = navigator.onLine ? 'Server unavailable' : 'Offline';
+            const errorMessage = err?.response?.data?.detail || statusText;
             setError(errorMessage);
-            throw new Error(errorMessage);
+            return null;
         } finally {
             setLoading(false);
         }

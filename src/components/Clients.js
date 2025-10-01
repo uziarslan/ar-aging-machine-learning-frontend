@@ -845,7 +845,7 @@ const Clients = ({ onAccordionExpand }) => {
                                 {formatCurrency(hoveredPoint.total)}
                             </div>
                             <div className="text-gray-400">
-                                {hoveredPoint.isPrediction ? 'Prediction' : 'Historical'}
+                                {hoveredPoint.isPrediction ? 'Generated' : 'Historical'}
                             </div>
                             {/* Tooltip arrow pointing down to the dot */}
                             <div
@@ -863,7 +863,7 @@ const Clients = ({ onAccordionExpand }) => {
                             </div>
                             <div className="flex items-center space-x-1">
                                 <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
-                                <span className="text-xs text-gray-600">Predictions</span>
+                                <span className="text-xs text-gray-600">Generated</span>
                             </div>
                         </div>
                         {!showLabels && (
@@ -1023,7 +1023,7 @@ const Clients = ({ onAccordionExpand }) => {
                             </div>
                         </div>
                         <div className="ml-3">
-                            <p className="text-sm font-medium text-gray-500">Predictions</p>
+                            <p className="text-sm font-medium text-gray-500">Generated</p>
                             <p className="text-2xl font-semibold text-gray-900">{clientsSummary?.total_predictions || 0}</p>
                         </div>
                     </div>
@@ -1078,7 +1078,7 @@ const Clients = ({ onAccordionExpand }) => {
                         >
                             <option value="name">Name</option>
                             <option value="created_at">Created Date</option>
-                            <option value="last_prediction">Last Prediction</option>
+                            <option value="last_prediction">Last Generated</option>
                             <option value="total_records">Total Records</option>
                         </select>
                         <button
@@ -1107,45 +1107,46 @@ const Clients = ({ onAccordionExpand }) => {
                             className="p-4 sm:p-6 cursor-pointer transition-colors duration-200"
                             onClick={() => setSelectedClient(selectedClient?.id === client.id ? null : client)}
                         >
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-3 sm:space-y-0">
+                                <div className="flex items-start sm:items-center space-x-3 sm:space-x-4">
                                     <div className="flex-shrink-0">
-                                        <div className={`w-12 h-12 rounded-full flex items-center justify-center ${client.has_model ? 'bg-green-100' : 'bg-gray-100'
+                                        <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center ${client.has_model ? 'bg-green-100' : 'bg-gray-100'
                                             }`}>
-                                            <span className={`text-lg font-semibold ${client.has_model ? 'text-green-600' : 'text-gray-600'
+                                            <span className={`text-sm sm:text-lg font-semibold ${client.has_model ? 'text-green-600' : 'text-gray-600'
                                                 }`}>
                                                 {client.name.charAt(0).toUpperCase()}
                                             </span>
                                         </div>
                                     </div>
-                                    <div>
-                                        <h3 className="text-lg font-semibold text-gray-900">{client.name}</h3>
-                                        <div className="flex items-center space-x-4 text-sm text-gray-500">
+                                    <div className="min-w-0 flex-1">
+                                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">{client.name}</h3>
+                                        <div className="flex flex-col space-y-1 text-xs sm:text-sm text-gray-500">
                                             <span>Created: {formatDate(client.created_at)}</span>
-                                            <span>•</span>
-                                            <span>{client.total_records} records</span>
-                                            <span>•</span>
-                                            <span>{client.historical_records} historical</span>
-                                            <span>•</span>
-                                            <span>{client.predicted_records} predictions</span>
+                                            <div className="flex flex-wrap items-center gap-1 sm:gap-2">
+                                                <span>{client.total_records} records</span>
+                                                <span className="hidden sm:inline">•</span>
+                                                <span>{client.historical_records} historical</span>
+                                                <span className="hidden sm:inline">•</span>
+                                                <span>{client.predicted_records} generated</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="flex items-center space-x-4">
-                                    <div className="text-right">
-                                        <div className="text-sm text-gray-500">Data Range</div>
-                                        <div className="text-sm font-medium text-gray-900">
+                                <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+                                    <div className="text-left sm:text-right">
+                                        <div className="text-xs sm:text-sm text-gray-500">Data Range</div>
+                                        <div className="text-xs sm:text-sm font-medium text-gray-900">
                                             {client.first_month ? formatMonth(client.first_month) : 'N/A'} - {client.last_month ? formatMonth(client.last_month) : 'N/A'}
                                         </div>
                                     </div>
-                                    <div className="flex items-center space-x-2">
+                                    <div className="flex items-center justify-between sm:justify-end space-x-2">
                                         {client.has_model && (
-                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            <span className="inline-flex items-center px-2 py-0.5 sm:px-2.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                                 Model v{client.model_version}
                                             </span>
                                         )}
                                         <svg
-                                            className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${selectedClient?.id === client.id ? 'rotate-180' : ''
+                                            className={`w-4 h-4 sm:w-5 sm:h-5 text-gray-400 transition-transform duration-200 ${selectedClient?.id === client.id ? 'rotate-180' : ''
                                                 }`}
                                             fill="none"
                                             stroke="currentColor"
@@ -1184,7 +1185,7 @@ const Clients = ({ onAccordionExpand }) => {
                                                         <h4 className="text-lg font-semibold text-gray-900 mb-4">Analytics Overview</h4>
 
                                                         {/* Key Metrics Grid */}
-                                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                                                             <div className="bg-blue-50 rounded-lg p-4">
                                                                 <div className="text-2xl font-bold text-blue-600">
                                                                     {analytics.growthRate > 0 ? '+' : ''}{analytics.growthRate.toFixed(1)}%
@@ -1209,9 +1210,9 @@ const Clients = ({ onAccordionExpand }) => {
                                                                 <div className="text-2xl font-bold text-purple-600">
                                                                     {analytics.predictionAccuracy.toFixed(1)}%
                                                                 </div>
-                                                                <div className="text-sm text-purple-800">Prediction Coverage</div>
+                                                                <div className="text-sm text-purple-800">Generated Coverage</div>
                                                                 <div className="text-xs text-purple-600">
-                                                                    {clientHistory.summary.predicted_records} predictions
+                                                                    {clientHistory.summary.predicted_records} generated
                                                                 </div>
                                                             </div>
 
@@ -1375,7 +1376,7 @@ const Clients = ({ onAccordionExpand }) => {
                                                                     <span className="ml-1 font-medium">{clientHistory.summary.historical_records}</span>
                                                                 </div>
                                                                 <div>
-                                                                    <span className="text-gray-500">Predictions:</span>
+                                                                    <span className="text-gray-500">Generated:</span>
                                                                     <span className="ml-1 font-medium">{clientHistory.summary.predicted_records}</span>
                                                                 </div>
                                                             </div>
@@ -1396,67 +1397,69 @@ const Clients = ({ onAccordionExpand }) => {
                                                         className="p-3 sm:p-4 cursor-pointer hover:bg-gray-50 transition-colors duration-200"
                                                         onClick={() => toggleMonthExpansion(monthData.month)}
                                                     >
-                                                        <div className="flex items-center justify-between">
-                                                            <div className="flex items-center space-x-4">
+                                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0">
+                                                            <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-4">
                                                                 <h5 className="font-medium text-gray-900">
                                                                     {formatMonth(monthData.month)}
                                                                 </h5>
-                                                                <div className="flex items-center space-x-2">
+                                                                <div className="flex flex-wrap items-center gap-2">
                                                                     <span className="text-sm text-gray-500">
                                                                         {monthData.records.length} records
                                                                     </span>
                                                                     {monthData.has_predictions && (
                                                                         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                                                                            {monthData.predicted_count} predictions
+                                                                            {monthData.predicted_count} generated
                                                                         </span>
                                                                     )}
                                                                 </div>
                                                             </div>
-                                                            <div className="flex items-center space-x-4">
-                                                                <div className="text-right">
+                                                            <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+                                                                <div className="text-left sm:text-right">
                                                                     <div className="text-sm font-medium text-green-600">
                                                                         {formatCurrency(monthData.total_amount)}
                                                                     </div>
                                                                     <div className="text-xs text-gray-500">Total Amount</div>
                                                                 </div>
 
-                                                                {/* Download Button for this month */}
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        downloadMonthCSV(monthData, selectedClient.name);
-                                                                    }}
-                                                                    className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
-                                                                    title="Download CSV"
-                                                                >
-                                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                                                    </svg>
-                                                                </button>
-
-                                                                {/* Chart Toggle for this month */}
-                                                                <div className="flex items-center space-x-2" onClick={(e) => toggleMonthChart(monthData.month, e)}>
-                                                                    <span className="text-xs text-gray-600">Chart</span>
+                                                                <div className="flex items-center justify-between sm:justify-end space-x-2">
+                                                                    {/* Download Button for this month */}
                                                                     <button
-                                                                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 ${showCharts.has(monthData.month) ? 'bg-blue-600' : 'bg-gray-200'
-                                                                            }`}
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            downloadMonthCSV(monthData, selectedClient.name);
+                                                                        }}
+                                                                        className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                                                                        title="Download CSV"
                                                                     >
-                                                                        <span
-                                                                            className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${showCharts.has(monthData.month) ? 'translate-x-5' : 'translate-x-1'
-                                                                                }`}
-                                                                        />
+                                                                        <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                                        </svg>
                                                                     </button>
-                                                                </div>
 
-                                                                <svg
-                                                                    className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${expandedMonths.has(monthData.month) ? 'rotate-180' : ''
-                                                                        }`}
-                                                                    fill="none"
-                                                                    stroke="currentColor"
-                                                                    viewBox="0 0 24 24"
-                                                                >
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                                                </svg>
+                                                                    {/* Chart Toggle for this month */}
+                                                                    <div className="flex items-center space-x-1 sm:space-x-2" onClick={(e) => toggleMonthChart(monthData.month, e)}>
+                                                                        <span className="text-xs text-gray-600 hidden sm:inline">Chart</span>
+                                                                        <button
+                                                                            className={`relative inline-flex h-4 w-7 sm:h-5 sm:w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 ${showCharts.has(monthData.month) ? 'bg-blue-600' : 'bg-gray-200'
+                                                                                }`}
+                                                                        >
+                                                                            <span
+                                                                                className={`inline-block h-2 w-2 sm:h-3 sm:w-3 transform rounded-full bg-white transition-transform ${showCharts.has(monthData.month) ? 'translate-x-3 sm:translate-x-5' : 'translate-x-0.5 sm:translate-x-1'
+                                                                                    }`}
+                                                                            />
+                                                                        </button>
+                                                                    </div>
+
+                                                                    <svg
+                                                                        className={`w-4 h-4 sm:w-5 sm:h-5 text-gray-400 transition-transform duration-200 ${expandedMonths.has(monthData.month) ? 'rotate-180' : ''
+                                                                            }`}
+                                                                        fill="none"
+                                                                        stroke="currentColor"
+                                                                        viewBox="0 0 24 24"
+                                                                    >
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                                    </svg>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -1489,31 +1492,31 @@ const Clients = ({ onAccordionExpand }) => {
                                                             })()}
 
                                                             <div className="overflow-x-auto max-h-80 sm:max-h-96 overflow-y-auto border border-gray-200 rounded-lg bg-white relative" style={{ maxWidth: '100%' }}>
-                                                                <table className="min-w-full divide-y divide-gray-200">
+                                                                <table className="min-w-full divide-y divide-gray-200 text-xs sm:text-sm">
                                                                     <thead className="bg-gray-50">
                                                                         <tr>
-                                                                            <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                            <th className="px-2 sm:px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                                                 Description
                                                                             </th>
-                                                                            <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                            <th className="px-2 sm:px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                                                 Current
                                                                             </th>
-                                                                            <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                            <th className="px-2 sm:px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                                                 0-30
                                                                             </th>
-                                                                            <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                            <th className="px-2 sm:px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                                                 31-60
                                                                             </th>
-                                                                            <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                            <th className="px-2 sm:px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                                                 61-90
                                                                             </th>
-                                                                            <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                            <th className="px-2 sm:px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                                                 90+
                                                                             </th>
-                                                                            <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                            <th className="px-2 sm:px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                                                 Total
                                                                             </th>
-                                                                            <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                            <th className="px-2 sm:px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                                                 Type
                                                                             </th>
                                                                         </tr>
@@ -1526,10 +1529,10 @@ const Clients = ({ onAccordionExpand }) => {
 
                                                                             return (
                                                                                 <tr key={index} className={record.predicted ? 'bg-purple-50' : ''}>
-                                                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                                                    <td className="px-2 sm:px-3 lg:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">
                                                                                         {record.description}
                                                                                     </td>
-                                                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                                                    <td className="px-2 sm:px-3 lg:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">
                                                                                         <div>{formatCurrency(record.aging.current)}</div>
                                                                                         {comparison && (
                                                                                             <ComparisonPopover
@@ -1550,7 +1553,7 @@ const Clients = ({ onAccordionExpand }) => {
                                                                                             </ComparisonPopover>
                                                                                         )}
                                                                                     </td>
-                                                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                                                    <td className="px-2 sm:px-3 lg:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">
                                                                                         <div>{formatCurrency(record.aging['0_30'])}</div>
                                                                                         {comparison && (
                                                                                             <ComparisonPopover
@@ -1571,7 +1574,7 @@ const Clients = ({ onAccordionExpand }) => {
                                                                                             </ComparisonPopover>
                                                                                         )}
                                                                                     </td>
-                                                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                                                    <td className="px-2 sm:px-3 lg:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">
                                                                                         <div>{formatCurrency(record.aging['31_60'])}</div>
                                                                                         {comparison && (
                                                                                             <ComparisonPopover
@@ -1592,7 +1595,7 @@ const Clients = ({ onAccordionExpand }) => {
                                                                                             </ComparisonPopover>
                                                                                         )}
                                                                                     </td>
-                                                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                                                    <td className="px-2 sm:px-3 lg:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">
                                                                                         <div>{formatCurrency(record.aging['61_90'])}</div>
                                                                                         {comparison && (
                                                                                             <ComparisonPopover
@@ -1613,7 +1616,7 @@ const Clients = ({ onAccordionExpand }) => {
                                                                                             </ComparisonPopover>
                                                                                         )}
                                                                                     </td>
-                                                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                                                    <td className="px-2 sm:px-3 lg:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">
                                                                                         <div>{formatCurrency(record.aging['90_plus'])}</div>
                                                                                         {comparison && (
                                                                                             <ComparisonPopover
@@ -1634,7 +1637,7 @@ const Clients = ({ onAccordionExpand }) => {
                                                                                             </ComparisonPopover>
                                                                                         )}
                                                                                     </td>
-                                                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                                                    <td className="px-2 sm:px-3 lg:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">
                                                                                         <div>{formatCurrency(record.total)}</div>
                                                                                         {comparison && (
                                                                                             <ComparisonPopover
@@ -1658,7 +1661,7 @@ const Clients = ({ onAccordionExpand }) => {
                                                                                     <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                                                                                         {record.predicted ? (
                                                                                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                                                                                                Prediction
+                                                                                                Generated
                                                                                             </span>
                                                                                         ) : (
                                                                                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
@@ -1675,10 +1678,10 @@ const Clients = ({ onAccordionExpand }) => {
                                                                             const comparison = getMonthComparison(monthData.month, clientHistory);
                                                                             return (
                                                                                 <tr className="bg-gray-50 border-t-2 border-gray-300">
-                                                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                                                                                    <td className="px-2 sm:px-3 lg:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-bold text-gray-900">
                                                                                         TOTALS
                                                                                     </td>
-                                                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                                                                                    <td className="px-2 sm:px-3 lg:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-bold text-gray-900">
                                                                                         <div>{formatCurrency(monthData.records.reduce((sum, record) => sum + (record.aging.current || 0), 0))}</div>
                                                                                         {comparison && (
                                                                                             <div className={`text-xs font-normal ${comparison.current.absolute >= 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -1687,7 +1690,7 @@ const Clients = ({ onAccordionExpand }) => {
                                                                                             </div>
                                                                                         )}
                                                                                     </td>
-                                                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                                                                                    <td className="px-2 sm:px-3 lg:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-bold text-gray-900">
                                                                                         <div>{formatCurrency(monthData.records.reduce((sum, record) => sum + (record.aging['0_30'] || 0), 0))}</div>
                                                                                         {comparison && (
                                                                                             <div className={`text-xs font-normal ${comparison['0_30'].absolute >= 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -1696,7 +1699,7 @@ const Clients = ({ onAccordionExpand }) => {
                                                                                             </div>
                                                                                         )}
                                                                                     </td>
-                                                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                                                                                    <td className="px-2 sm:px-3 lg:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-bold text-gray-900">
                                                                                         <div>{formatCurrency(monthData.records.reduce((sum, record) => sum + (record.aging['31_60'] || 0), 0))}</div>
                                                                                         {comparison && (
                                                                                             <div className={`text-xs font-normal ${comparison['31_60'].absolute >= 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -1705,7 +1708,7 @@ const Clients = ({ onAccordionExpand }) => {
                                                                                             </div>
                                                                                         )}
                                                                                     </td>
-                                                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                                                                                    <td className="px-2 sm:px-3 lg:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-bold text-gray-900">
                                                                                         <div>{formatCurrency(monthData.records.reduce((sum, record) => sum + (record.aging['61_90'] || 0), 0))}</div>
                                                                                         {comparison && (
                                                                                             <div className={`text-xs font-normal ${comparison['61_90'].absolute >= 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -1714,7 +1717,7 @@ const Clients = ({ onAccordionExpand }) => {
                                                                                             </div>
                                                                                         )}
                                                                                     </td>
-                                                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                                                                                    <td className="px-2 sm:px-3 lg:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-bold text-gray-900">
                                                                                         <div>{formatCurrency(monthData.records.reduce((sum, record) => sum + (record.aging['90_plus'] || 0), 0))}</div>
                                                                                         {comparison && (
                                                                                             <div className={`text-xs font-normal ${comparison['90_plus'].absolute >= 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -1723,7 +1726,7 @@ const Clients = ({ onAccordionExpand }) => {
                                                                                             </div>
                                                                                         )}
                                                                                     </td>
-                                                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-bold text-green-600">
+                                                                                    <td className="px-2 sm:px-3 lg:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-bold text-green-600">
                                                                                         <div>{formatCurrency(monthData.records.reduce((sum, record) => sum + (record.total || 0), 0))}</div>
                                                                                         {comparison && (
                                                                                             <div className={`text-xs font-normal ${comparison.total.absolute >= 0 ? 'text-green-600' : 'text-red-600'}`}>

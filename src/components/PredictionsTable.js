@@ -267,7 +267,7 @@ function PredictionsTable(props) {
     return (
         <div className="card">
             <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-gray-900">Predictions Table</h2>
+                <h2 className="text-xl font-semibold text-gray-900">Results Table</h2>
                 <div className="flex items-center gap-4">
                     <div className="text-sm">
                         <span className="text-gray-600">Grand Total:</span>

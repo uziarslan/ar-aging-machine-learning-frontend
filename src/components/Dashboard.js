@@ -263,8 +263,8 @@ const Dashboard = forwardRef(({ onNavigation }, ref) => {
                 setModelInfo(response.model_meta);
             }
         } catch (error) {
-            console.error('Prediction failed:', error);
-            alert('Failed to generate predictions. Please try again.');
+            console.error('Generation failed:', error);
+            alert('Failed to generate results. Please try again.');
         } finally {
             setIsGenerating(false);
         }
@@ -299,7 +299,7 @@ const Dashboard = forwardRef(({ onNavigation }, ref) => {
 
     const handleApprove = () => {
         if (predictions.length === 0) {
-            alert('No predictions to approve');
+            alert('Nothing to approve');
             return;
         }
         setShowApproveModal(true);
@@ -327,7 +327,7 @@ const Dashboard = forwardRef(({ onNavigation }, ref) => {
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900">AR Aging Predictions</h1>
+                        <h1 className="text-3xl font-bold text-gray-900">AR Aging</h1>
                         <p className="text-gray-600 mt-1">Generate accurate financial forecasts using machine learning</p>
                     </div>
                     <div className="flex items-center space-x-3">
@@ -393,7 +393,7 @@ const Dashboard = forwardRef(({ onNavigation }, ref) => {
                     />
                 </div>
 
-                {/* Prediction Settings */}
+                {/* Settings */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                     <PredictionForm
                         targetMonth={targetMonth}
@@ -416,7 +416,7 @@ const Dashboard = forwardRef(({ onNavigation }, ref) => {
             <div className="w-full">
                 {predictions.length > 0 ? (
                     <div className="space-y-6">
-                        {/* Download Button - Moved above prediction table */}
+                        {/* Download Button - Moved above table */}
                         <div className="flex justify-end">
                             <DownloadButton
                                 predictions={predictions}
@@ -455,12 +455,12 @@ const Dashboard = forwardRef(({ onNavigation }, ref) => {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                             </svg>
                         </div>
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">No Predictions Generated</h3>
-                        <p className="text-gray-600 mb-4">Select a client and generate predictions to see results here.</p>
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">No Results Yet</h3>
+                        <p className="text-gray-600 mb-4">Select a client and generate to see results here.</p>
                         <div className="text-sm text-gray-500">
                             <p>• Choose a client from the dropdown</p>
                             <p>• Set target month and total amount</p>
-                            <p>• Click "Generate Predictions"</p>
+                            <p>• Click "Generate"</p>
                         </div>
                     </div>
                 )}
@@ -477,7 +477,7 @@ const Dashboard = forwardRef(({ onNavigation }, ref) => {
                     onSuccess={() => {
                         setShowApproveModal(false);
                         setPredictions([]);
-                        alert('Predictions approved and saved successfully!');
+                        alert('Approved and saved successfully!');
                         // If there's a pending view after approval, switch to it
                         if (pendingViewAfterApproval) {
                             if (onNavigation) {
