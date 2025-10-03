@@ -1,13 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import useApi from '../hooks/useApi';
 import API_CONFIG from '../config/api';
 
 const ApproveModal = ({ predictions, clientId, targetMonth, modelVersion, onClose, onSuccess }) => {
     const [comment, setComment] = useState('');
     const [isApproving, setIsApproving] = useState(false);
+    const [approvalStartTime, setApprovalStartTime] = useState(null);
+    const [elapsedTime, setElapsedTime] = useState(0);
     const retrain = true; // Always retrain
 
     const { postWithApiKey } = useApi();
+
+    // Timer for approval elapsed time
+    useEffect(() => {
+        let interval = null;
+        if (isApproving && approvalStartTime) {
+            interval = setInterval(() => {
+                const now = Date.now();
+                setElapsedTime(Math.floor((now - approvalStartTime) / 1000));
+            }, 1000);
+        } else {
+            setElapsedTime(0);
+        }
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [isApproving, approvalStartTime]);
+
+    const formatElapsedTime = (seconds) => {
+        if (seconds < 60) {
+            return `${seconds}s`;
+        } else {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            return `${minutes}m ${remainingSeconds}s`;
+        }
+    };
 
     const handleApprove = async () => {
         if (!clientId || !targetMonth || !modelVersion) {
@@ -16,6 +44,7 @@ const ApproveModal = ({ predictions, clientId, targetMonth, modelVersion, onClos
         }
 
         setIsApproving(true);
+        setApprovalStartTime(Date.now());
         try {
             await postWithApiKey(API_CONFIG.ENDPOINTS.APPROVE, {
                 client_id: clientId,
@@ -32,6 +61,7 @@ const ApproveModal = ({ predictions, clientId, targetMonth, modelVersion, onClos
             alert(`Failed to approve predictions: ${error.message}`);
         } finally {
             setIsApproving(false);
+            setApprovalStartTime(null);
         }
     };
 
@@ -105,7 +135,7 @@ const ApproveModal = ({ predictions, clientId, targetMonth, modelVersion, onClos
                     <div className="flex justify-end space-x-3">
                         <button
                             onClick={onClose}
-                            className="btn-secondary"
+                            className={`btn-secondary ${isApproving ? 'opacity-50 cursor-not-allowed' : ''}`}
                             disabled={isApproving}
                         >
                             Cancel
@@ -113,7 +143,7 @@ const ApproveModal = ({ predictions, clientId, targetMonth, modelVersion, onClos
                         <button
                             onClick={handleApprove}
                             disabled={isApproving}
-                            className="btn-success flex items-center space-x-2"
+                            className={`btn-success flex items-center space-x-2 ${isApproving ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
                             {isApproving ? (
                                 <>
@@ -121,7 +151,7 @@ const ApproveModal = ({ predictions, clientId, targetMonth, modelVersion, onClos
                                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                     </svg>
-                                    Approving...
+                                    <span>Approving... {formatElapsedTime(elapsedTime)}</span>
                                 </>
                             ) : (
                                 <>

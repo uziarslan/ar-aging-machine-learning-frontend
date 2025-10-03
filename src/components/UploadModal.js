@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import API_CONFIG, { getUploadHeaders } from '../config/api';
 
 const UploadModal = ({ onClose, onSuccess }) => {
@@ -6,8 +6,36 @@ const UploadModal = ({ onClose, onSuccess }) => {
     const [clientName, setClientName] = useState('');
     const [description, setDescription] = useState('');
     const [isUploading, setIsUploading] = useState(false);
+    const [uploadStartTime, setUploadStartTime] = useState(null);
+    const [elapsedTime, setElapsedTime] = useState(0);
 
     // No need for useApi in this component since we're using direct fetch
+
+    // Timer for upload elapsed time
+    useEffect(() => {
+        let interval = null;
+        if (isUploading && uploadStartTime) {
+            interval = setInterval(() => {
+                const now = Date.now();
+                setElapsedTime(Math.floor((now - uploadStartTime) / 1000));
+            }, 1000);
+        } else {
+            setElapsedTime(0);
+        }
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [isUploading, uploadStartTime]);
+
+    const formatElapsedTime = (seconds) => {
+        if (seconds < 60) {
+            return `${seconds}s`;
+        } else {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            return `${minutes}m ${remainingSeconds}s`;
+        }
+    };
 
     const handleFileChange = (e) => {
         const selectedFile = e.target.files[0];
@@ -29,6 +57,7 @@ const UploadModal = ({ onClose, onSuccess }) => {
         }
 
         setIsUploading(true);
+        setUploadStartTime(Date.now());
         try {
             const formData = new FormData();
             formData.append('file', file);
@@ -54,6 +83,7 @@ const UploadModal = ({ onClose, onSuccess }) => {
             alert(`Upload failed: ${error.message}`);
         } finally {
             setIsUploading(false);
+            setUploadStartTime(null);
         }
     };
 
@@ -163,7 +193,7 @@ const UploadModal = ({ onClose, onSuccess }) => {
                         <div className="flex justify-end space-x-3 pt-4">
                             <button
                                 onClick={onClose}
-                                className="btn-secondary"
+                                className={`btn-secondary ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 disabled={isUploading}
                             >
                                 Cancel
@@ -171,7 +201,7 @@ const UploadModal = ({ onClose, onSuccess }) => {
                             <button
                                 onClick={handleUpload}
                                 disabled={!file || !clientName.trim() || isUploading}
-                                className="btn-primary flex items-center space-x-2"
+                                className={`btn-primary flex items-center space-x-2 ${(!file || !clientName.trim() || isUploading) ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
                                 {isUploading ? (
                                     <>
@@ -179,7 +209,7 @@ const UploadModal = ({ onClose, onSuccess }) => {
                                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                         </svg>
-                                        Uploading & Training...
+                                        <span>Uploading & Training... {formatElapsedTime(elapsedTime)}</span>
                                     </>
                                 ) : (
                                     <>

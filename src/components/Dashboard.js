@@ -17,6 +17,8 @@ const Dashboard = forwardRef(({ onNavigation }, ref) => {
     const [predictions, setPredictions] = useState([]);
     const [lastMonthData, setLastMonthData] = useState([]);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [generationStartTime, setGenerationStartTime] = useState(null);
+    const [elapsedTime, setElapsedTime] = useState(0);
     const [showApproveModal, setShowApproveModal] = useState(false);
     const [modelInfo, setModelInfo] = useState(null);
     const [clientLastMonth, setClientLastMonth] = useState(null);
@@ -47,6 +49,22 @@ const Dashboard = forwardRef(({ onNavigation }, ref) => {
     useEffect(() => {
         setClientsData(clients || []);
     }, [clients]);
+
+    // Timer for generation elapsed time
+    useEffect(() => {
+        let interval = null;
+        if (isGenerating && generationStartTime) {
+            interval = setInterval(() => {
+                const now = Date.now();
+                setElapsedTime(Math.floor((now - generationStartTime) / 1000));
+            }, 1000);
+        } else {
+            setElapsedTime(0);
+        }
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [isGenerating, generationStartTime]);
 
     // Expose methods to parent component via ref
     useImperativeHandle(ref, () => ({
@@ -216,6 +234,7 @@ const Dashboard = forwardRef(({ onNavigation }, ref) => {
         }
 
         setIsGenerating(true);
+        setGenerationStartTime(Date.now());
         try {
             // Prepare additional entries: only include rows with values
             const validEntries = (clientEntries || [])
@@ -268,6 +287,7 @@ const Dashboard = forwardRef(({ onNavigation }, ref) => {
             alert('Failed to generate results. Please try again.');
         } finally {
             setIsGenerating(false);
+            setGenerationStartTime(null);
         }
     };
 
@@ -409,6 +429,7 @@ const Dashboard = forwardRef(({ onNavigation }, ref) => {
                         columnTargets={columnTargets}
                         onColumnTargetsChange={handleColumnTargetsChange}
                         lastMonthData={lastMonthData}
+                        elapsedTime={elapsedTime}
                     />
                 </div>
             </div>
