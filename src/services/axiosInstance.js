@@ -1,10 +1,9 @@
 import axios from "axios";
 import authService from "./authService";
-
-const END_POINT = process.env.REACT_APP_END_POINT || "http://localhost:8000";
+import API_CONFIG from "../config/api";
 
 const axiosInstance = axios.create({
-    baseURL: END_POINT,
+    baseURL: API_CONFIG.BASE_URL,
     headers: {
         "Content-Type": "application/json",
     },

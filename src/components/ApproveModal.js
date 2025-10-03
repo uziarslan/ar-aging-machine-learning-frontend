@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import useApi from '../hooks/useApi';
+import API_CONFIG from '../config/api';
 
 const ApproveModal = ({ predictions, clientId, targetMonth, modelVersion, onClose, onSuccess }) => {
     const [comment, setComment] = useState('');
@@ -16,7 +17,7 @@ const ApproveModal = ({ predictions, clientId, targetMonth, modelVersion, onClos
 
         setIsApproving(true);
         try {
-            await postWithApiKey('/api/approve', {
+            await postWithApiKey(API_CONFIG.ENDPOINTS.APPROVE, {
                 client_id: clientId,
                 target_month: targetMonth,
                 predictions: predictions,

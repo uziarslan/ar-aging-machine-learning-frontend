@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import useApi from '../hooks/useApi';
 import MonthComparisonChart from './MonthComparisonChart';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+import API_CONFIG from '../config/api';
 
 // Popover component for showing previous month values
 const ComparisonPopover = ({ children, previousValue, currentValue, bucket, isVisible, onMouseEnter, onMouseLeave, onPopoverMouseEnter, onPopoverMouseLeave, formatCurrency }) => {
@@ -121,7 +121,7 @@ const Clients = ({ onAccordionExpand }) => {
     // State for chart visibility toggle per month
     const [showCharts, setShowCharts] = useState(new Set());
 
-    const { data: clientsSummary, loading: summaryLoading, error: summaryError } = useApi('/api/clients/summary');
+    const { data: clientsSummary, loading: summaryLoading, error: summaryError } = useApi(API_CONFIG.ENDPOINTS.CLIENTS_SUMMARY);
 
     // Fetch client history when a client is selected
     useEffect(() => {
@@ -131,7 +131,7 @@ const Clients = ({ onAccordionExpand }) => {
             setHistoryError(null);
             setChartYearFilter('all'); // Reset year filter for new client
 
-            fetch(`${API_BASE_URL}/api/client/${selectedClient.id}/history`)
+            fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CLIENT_HISTORY}/${selectedClient.id}/history`)
                 .then(response => response.json())
                 .then(data => {
                     setClientHistory(data);

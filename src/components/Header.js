@@ -1,5 +1,6 @@
 import React from 'react';
 import axiosInstance from '../services/axiosInstance';
+import API_CONFIG from '../config/api';
 
 const Header = ({ onMenuClick, onUploadClick, onLogout, user }) => {
     const [open, setOpen] = React.useState(false);
@@ -19,7 +20,7 @@ const Header = ({ onMenuClick, onUploadClick, onLogout, user }) => {
         const checkHealth = async () => {
             try {
                 const base = axiosInstance?.defaults?.baseURL || '';
-                const res = await fetch(`${base}/api/health`, { method: 'GET' });
+                const res = await fetch(`${base}${API_CONFIG.ENDPOINTS.HEALTH}`, { method: 'GET' });
                 if (mounted) setIsOnline(res && res.ok);
             } catch (e) {
                 if (mounted) setIsOnline(false);

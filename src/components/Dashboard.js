@@ -7,6 +7,7 @@ import ApproveModal from './ApproveModal';
 import DownloadButton from './DownloadButton';
 import StatsCards from './StatsCards';
 import useApi from '../hooks/useApi';
+import API_CONFIG from '../config/api';
 
 const Dashboard = forwardRef(({ onNavigation }, ref) => {
     const navigate = useNavigate();
@@ -32,7 +33,7 @@ const Dashboard = forwardRef(({ onNavigation }, ref) => {
         b90_plus: ''
     });
 
-    const { data: clients, loading: clientsLoading, error: clientsError } = useApi('/api/clients');
+    const { data: clients, loading: clientsLoading, error: clientsError } = useApi(API_CONFIG.ENDPOINTS.CLIENTS);
     const { post: generatePrediction, loading: predictionLoading } = useApi(null, { autoFetch: false });
     const { get: getClientLastMonth } = useApi(null, { autoFetch: false });
 
@@ -81,7 +82,7 @@ const Dashboard = forwardRef(({ onNavigation }, ref) => {
             const prevMonth = new Date(targetDate.getFullYear(), targetDate.getMonth() - 1, 1);
             const prevMonthStr = prevMonth.toISOString().slice(0, 7); // YYYY-MM format
 
-            const response = await getClientLastMonth(`/api/client/${clientId}/history?month=${prevMonthStr}`);
+            const response = await getClientLastMonth(`${API_CONFIG.ENDPOINTS.CLIENT_HISTORY}/${clientId}/history?month=${prevMonthStr}`);
 
             if (response && Array.isArray(response)) {
                 setLastMonthData(response);
@@ -114,7 +115,7 @@ const Dashboard = forwardRef(({ onNavigation }, ref) => {
                 }
 
                 try {
-                    const response = await getClientLastMonth(`/api/client/${selectedClient.id}/last_month`);
+                    const response = await getClientLastMonth(`${API_CONFIG.ENDPOINTS.CLIENT_LAST_MONTH}/${selectedClient.id}/last_month`);
                     if (response && response.last_month) {
                         setClientLastMonth(response.last_month);
 
@@ -127,7 +128,7 @@ const Dashboard = forwardRef(({ onNavigation }, ref) => {
                         setTargetMonth(nextAvailableMonth);
 
                         // Fetch exact last month's data (not derived), to ensure correct entries count
-                        const prevMonthData = await getClientLastMonth(`/api/client/${selectedClient.id}/history?month=${response.last_month}`);
+                        const prevMonthData = await getClientLastMonth(`${API_CONFIG.ENDPOINTS.CLIENT_HISTORY}/${selectedClient.id}/history?month=${response.last_month}`);
                         if (prevMonthData && Array.isArray(prevMonthData)) {
                             setLastMonthData(prevMonthData);
                         } else {
@@ -242,7 +243,7 @@ const Dashboard = forwardRef(({ onNavigation }, ref) => {
                 b90_plus: parseFloat(columnTargets.b90_plus || 0)
             };
 
-            const response = await generatePrediction('/api/predict', requestPayload);
+            const response = await generatePrediction(API_CONFIG.ENDPOINTS.PREDICT, requestPayload);
 
             if (response) {
                 console.log('DEBUG: Backend response received:', JSON.stringify(response, null, 2));

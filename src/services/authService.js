@@ -1,6 +1,5 @@
 import axiosInstance from "./axiosInstance";
-
-const API_URL = "/api/auth";
+import API_CONFIG from "../config/api";
 
 const notifyExtensionWithToken = (token) => {
     try {
@@ -11,7 +10,7 @@ const notifyExtensionWithToken = (token) => {
 };
 
 const register = async (userData) => {
-    const response = await axiosInstance.post(`${API_URL}/user/signup`, userData);
+    const response = await axiosInstance.post(API_CONFIG.ENDPOINTS.SIGNUP, userData);
     if (response.data) {
         const token = response.data.token;
         localStorage.setItem("token", token);
@@ -22,7 +21,7 @@ const register = async (userData) => {
 
 const login = async (userData) => {
     // supports JSON body with email/password
-    const response = await axiosInstance.post(`${API_URL}/user/login`, userData);
+    const response = await axiosInstance.post(API_CONFIG.ENDPOINTS.LOGIN, userData);
     if (response.data) {
         const token = response.data.token;
         localStorage.setItem("token", token);
@@ -39,7 +38,7 @@ const getUser = async () => {
     const token = localStorage.getItem("token");
     if (!token) return null;
     try {
-        const response = await axiosInstance.get(`${API_URL}/user`);
+        const response = await axiosInstance.get(API_CONFIG.ENDPOINTS.USER);
         return response.data;
     } catch (_err) {
         return null;

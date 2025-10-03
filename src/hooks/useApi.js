@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+import API_CONFIG, { getApiHeaders } from '../config/api';
 
 const useApi = (endpoint, options = {}) => {
     const [data, setData] = useState(null);
@@ -12,10 +11,8 @@ const useApi = (endpoint, options = {}) => {
         setLoading(true);
         setError(null);
         try {
-            const response = await axios.get(`${API_BASE_URL}${url}`, {
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+            const response = await axios.get(`${API_CONFIG.BASE_URL}${url}`, {
+                headers: getApiHeaders(),
             });
 
             setData(response.data);
@@ -34,10 +31,8 @@ const useApi = (endpoint, options = {}) => {
         setLoading(true);
         setError(null);
         try {
-            const response = await axios.post(`${API_BASE_URL}${url}`, body, {
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+            const response = await axios.post(`${API_CONFIG.BASE_URL}${url}`, body, {
+                headers: getApiHeaders(),
             });
 
             setData(response.data);
@@ -56,11 +51,8 @@ const useApi = (endpoint, options = {}) => {
         setLoading(true);
         setError(null);
         try {
-            const response = await axios.post(`${API_BASE_URL}${url}`, body, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-API-Key': 'demo-api-key-123',
-                },
+            const response = await axios.post(`${API_CONFIG.BASE_URL}${url}`, body, {
+                headers: getApiHeaders(true), // Include API key
             });
 
             setData(response.data);

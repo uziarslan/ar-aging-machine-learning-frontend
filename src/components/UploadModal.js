@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import API_CONFIG, { getUploadHeaders } from '../config/api';
 
 const UploadModal = ({ onClose, onSuccess }) => {
     const [file, setFile] = useState(null);
@@ -34,11 +35,9 @@ const UploadModal = ({ onClose, onSuccess }) => {
             formData.append('client_name', clientName.trim());
             formData.append('description', description.trim());
 
-            const response = await fetch('http://localhost:8000/api/upload', {
+            const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.UPLOAD}`, {
                 method: 'POST',
-                headers: {
-                    'X-API-Key': 'demo-api-key-123',
-                },
+                headers: getUploadHeaders(),
                 body: formData,
             });
 
